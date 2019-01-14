@@ -1,0 +1,83 @@
+<h1>Basics</h1>
+
+<h3>What is JML?</h3>
+
+<p>JML is short for java modeling language. It's a tool for automating formal verification of java code. The main idea behind such proofs is as following:</p>
+
+<ol>
+<li>First create formal specification of your algorithms</li>
+<li>Then translate it into mathematical theorems and proofs</li>
+<li>And finally run some verifiers to actually analyze if our logic is valid</li>
+</ol>
+
+<p>If you want to dive deeper into formal proofs and automated theorem verifiers, you should learn some <a href="https://coq.inria.fr">Coq</a>, <a href="https://isabelle.in.tum.de">Isabelle</a>, <a href="https://www.idris-lang.org">Idris</a> or type theory. However, in this tutorial we will focus more on using verifiers in practice with <a href="https://www.openjml.org">OpenJML</a> and Java. If you don't like Java, you could still follow along with C and <a href="https://frama-c.com">Frama-C</a>. It's largely similar with some C-specific quirk but if you know one, then learning the other should be piece of cake. Alternatively if you for some reasong don't like OpenJML, you could also  try out <a href="http://krakatoa.lri.fr">Krakatoa+Jessie</a> but this tutorial won't cover them.</p>
+
+<p><strong>Note:</strong> JML is a very niche tool and there are extrememly few tutorials for it. Here I will focus on making a user-friendly how-to guide with lot's of examples. However, it is strongly adviced to go through <a href="http://www.eecs.ucf.edu/~leavens/JML/jmlrefman/jmlrefman_2.html">official manual</a> as well.</p>
+
+<h3>How it works</h3>
+
+<p>JML is written entirely in form of Java comments. </p>
+
+<pre><code>//This is standard java comment
+/*And this is 
+block comment*/
+</code></pre>
+
+<p>To turn them into JML you just need to add @</p>
+
+<pre><code>//@JML stuff
+
+/*@
+JML stuff
+@*/
+
+/*
+@NOT valid JML
+@NOT valid JML
+*/
+
+/*
+@NOT valid JML
+@NOT valid JML
+*/
+</code></pre>
+
+<p>So for single line JML use <code>//@</code> and for multiline use <code>/*@ ... @*/</code>.</p>
+
+<p>JML uses syntax quite similar to Java.</p>
+
+<pre><code>//@ensures x &gt; 0;
+//@requires Long.MIN_VALUE &lt;= sum &amp;&amp; sum &lt;= Long.MAX_VALUE;
+/*@maintaining sum == 
+    (\sum int j; 
+        i &lt;= j &amp;&amp; 0 &lt;= j &amp;&amp; j &lt; a.length;
+        (\bigint)a[j]
+    );
+@*/
+</code></pre>
+
+<p>You can you Java's boolean logic <code>a &amp;&amp; b</code>, <code>a || b</code> and so on. You must separate lines with <code>;</code>. You can even use <code>public</code>, <code>private</code> and <code>protected</code>.However, additionally you get a bunch of new keywords like <code>ensures</code>, <code>requires</code>, <code>maintaining</code> and many more. </p>
+
+<h3>Most essential tools</h3>
+
+<h5>requires + ensures</h5>
+
+<p>The core concept of JML is to make sure that methods work correctly. This is what <code>ensures</code> and <code>requires</code> are all about. Check this out:</p>
+
+<pre><code>//@requires a&gt;7
+//@requires b&gt;4
+//@ensures \result&gt;13
+int plus(int a, int b){
+    return a+b+1;
+}
+</code></pre>
+
+<p>It essentially says:</p>
+
+<p>Method <code>plus(int a,int b)</code> requires you to pass arguments such that <code>a</code> is greater than 7, and <code>b</code> is greater than 12. If you do that, then you can be 100% sure that the result (represented by <code>\result</code>) is greater than 13. </p>
+
+<p>Now, give yourself some time and think: Is this code correct? If you say "yes", then you are terribly wrong. Copy this code and try to run <code>openjml -esc YourFile.java</code>. You will see an error mentioning integer overflow. OpenJML is really smart. It take everything into account. Even such extreme scenarions where sum of two really huge integers causes overflow in modular arithmetic. </p>
+
+<h5>invariant</h5>
+
+<h5>assert</h5>

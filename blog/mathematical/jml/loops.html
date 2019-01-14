@@ -1,0 +1,23 @@
+<h1>Loops</h1>
+
+<p>JML has some special keywords to manage loops. Prooving loop correctness can sometimes require a bit more attention. Take a look at this example:</p>
+
+<pre><code>public void f() {
+
+    for (int i = 1; i &lt;= 100; i++) {
+        //@assert i &gt; 0;
+    }
+}
+</code></pre>
+
+<p>It's quite obvious that i>0. JML won't know it unless you explicitly point it out. You must add <code>maintaining</code> to make it work:</p>
+
+<pre><code>public void f() {
+    //@maintaining i&gt;0;
+    for (int i = 1; i &lt;= 100; i++) {
+        //@assert i &gt; 0;
+    }
+}
+</code></pre>
+
+<p>This special keyword works similarly like <code>ensures</code> and <code>requires</code> except that it's used to specify behaviour of loops instead of functions.</p>

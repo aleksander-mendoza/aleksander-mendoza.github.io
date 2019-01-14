@@ -1,0 +1,41 @@
+<h1>Assignability</h1>
+
+<p>OpenJML has special keyword <code>assignable</code> that restricts what variables you are allowed to mutate. It's a bit tricky to understand sometimes. Consider this:</p>
+
+<pre><code>public class E{
+    public int f;
+}
+
+
+//@assignable e.f;
+public void f(E e, E e2) {
+    e.f = 4; //this is okay
+    e = new E(); //this is okay too
+    e2.f = 3; //this is not okay
+    e2 = new E(); //this is okay
+}
+</code></pre>
+
+<p>You might think that by specifying only <code>e.f</code> as assignable, doing something like <code>e = new E()</code> would fail. But actually that's not what <code>assignable</code> does. In reality it only restricts you from mutating global and instance varaibles. Local varaibles and parameters are okay to mutate. However, field <code>f</code> is not a parameter! It's a completely external varaible and that's why <code>e2.f = 3</code> fails! Here is an extensive example:</p>
+
+<pre><code>int g;
+
+public class E{
+    public int f;
+}
+
+public E n = new E();
+
+//@assignable e.f;
+public void f(E e, E e2,int h) {
+    e.f = 4; //ok
+    e = new E(); //ok
+    e2.f = 3; //not ok
+    e2 = new E(); //ok
+    h = 4; //ok
+    g = 3; //not ok
+    SomeGlobal.staticInt = 5; //not ok
+    n.f = 10; //not ok
+    n = new E(); //not ok
+}
+</code></pre>

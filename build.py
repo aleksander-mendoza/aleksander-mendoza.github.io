@@ -19,20 +19,48 @@ gen = 'blog'
 if args.all:
     args.clean = args.index = args.gen = True
 if args.clean:
-    shutil.rmtree(gen)
+    if os.path.isdir(gen):
+        shutil.rmtree(gen)
+    for entry in os.walk('.'):
+        for file in entry[2]:
+            if file == ".DS_Store":
+                toRemove = entry[0] + "/.DS_Store"
+                print("removing: " + toRemove)
+                os.remove(toRemove)
 if args.index:
-    def genIndex(dir,url_prefix):
-        dirName, subdirList, _ = next(os.walk(dev))
-        for subdir in subdirList:
-            subdir = dirName + '/' + subdir
-            suburl = url_prefix + '/' + subdir
-            print(subdir)
-            print(suburl)
-            with open(subdir + ".html", "w+") as file:
-                for subsubdir in next(os.walk(subdir))[1]:
+    def genIndex(dir,url_prefix,depth=1):
+        dirName, subdirList, _ = next(os.walk(dir))
+        parentName = os.path.basename(dirName)
+        def fileToArticleName(fileName: str)->str:
+            return fileName.replace('_', ' ')
+        for subdirName in subdirList:
+            subdir = dirName + '/' + subdirName
+            suburl = url_prefix + '/' + subdirName
+            print(subdirName + ": " + subdir + " --> " + suburl)
+            with open(subdir + ".md", "w+") as file:
+                _, subsubdirList, subsubfileList = next(os.walk(subdir))
+                if depth==1:
+                    file.write("[Hello world!](hello.html)\n\n")
+                    file.write("[About mathematics!](mathematical.html)\n\n")
+                    file.write("[About programming!](programming.html)\n\n")
+                    file.write("[About machine learning!](machine_learning.html)\n\n")
+                else:
+                    file.write("Back: [" + fileToArticleName(parentName) + "](../"+parentName+".html)\n\n")
+                file.write("Subsections:\n\n")
+                for subsubdir in subsubdirList:
                     subsuburl = suburl + '/' + subsubdir
-                    file.write("["+subsubdir+"]("+subsuburl+".html)")
-            genIndex(subdir, suburl)
+                    file.write("- ["+fileToArticleName(subsubdir)+"]("+ "../"*depth + subsuburl+".html)\n")
+                file.write("\n\nArticles:\n\n")
+                for subsubfile in subsubfileList:
+                    if subsubfile.startswith("_"):
+                        continue
+                    if subsubfile.endswith(".md"):
+                        subsubfilename = subsubfile[:-len(".md")]
+                    if os.path.isdir(subdir + "/" + subsubfilename):
+                        continue
+                    subsuburl = suburl + '/' + subsubfilename
+                    file.write("- ["+fileToArticleName(subsubfilename)+"]("+ "../"*depth + subsuburl+".html)\n")
+            genIndex(subdir, suburl, depth+1)
     genIndex(dev, gen)
 
 if args.gen:

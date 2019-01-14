@@ -1,0 +1,87 @@
+<h1>Side effects</h1>
+
+<p>As you know, Java is not a functional language and we have to deal with side effects while proving Java code. It's very easy to dismiss all the possibilities that arise from it. Here is an example:</p>
+
+<pre><code>Camera camera;
+
+void stopCamera(){
+    if(camera!=null){
+        camera.stopPreview();
+        camera.release();
+        camera = null;    
+    }
+}
+</code></pre>
+
+<p>What do you think is wrong with this code? If you try to verify it, checker will tell you something like </p>
+
+<blockquote>
+  <p>The prover cannot establish an assertion (PossiblyNullDeReference) in method</p>
+</blockquote>
+
+<p>That is because you checked </p>
+
+<pre><code>if(camera!=null){
+</code></pre>
+
+<p>but can you be 100% sure that </p>
+
+<pre><code>camera.stopPreview()
+</code></pre>
+
+<p>doesn't look like this?</p>
+
+<pre><code>void stopPreview(){
+    camera = null;
+}
+</code></pre>
+
+<p>The problem is that our example <code>camera</code> is an instance variable which makes it theoretically global and vulnerable to side effects. These kinds of errors seem really unintuitive. There are many error such strange messages. At first make you think that JML is flawed but after deeper investigation you actually see taht JML was righ all along. 99.9% of time it's you - the programmer - who misses something. </p>
+
+<p>Alright, but how to solve problem of side effects? Here are a few approaches:</p>
+
+<h3>ensures + \old</h3>
+
+<p>Specify</p>
+
+<pre><code>//@ensures camera == \old(camera);
+void stopPreview(){
+    ...
+}
+</code></pre>
+
+<h3>assignable</h3>
+
+<p>No external variables can be assigned:</p>
+
+<pre><code>//@assignable \nothing;
+void stopPreview();
+</code></pre>
+
+<p>Only specific external variables can be assigned:</p>
+
+<pre><code>//@assignable var0;
+//@assignable var1;
+void stopPreview();
+</code></pre>
+
+<h3>pure</h3>
+
+<p>Nothing from outside can be used at all. No reading. No writing. Only input are parameters and only output is the returned value.</p>
+
+<pre><code>/*@ pure @*/ void stopPreview();
+</code></pre>
+
+<h3>invariant</h3>
+
+<p>You can go even farther and just mark some invariant contraints for specific variable. They will then hold across all methods and classes and if any method attemps to violate them, an error will be returned.</p>
+
+<pre><code>//@public invariant camera != null;
+</code></pre>
+
+<p>Notice that this specific <code>!= null</code> inavriant can be simplified with a shorthand:</p>
+
+<pre><code>public /*@ non_null @*/ Camera camera;
+</code></pre>
+
+<p>(and in most cases it's not even necessary because <code>non_null</code> is always default in OpenJML and to make something nullable you must explicity specify it with <code>/*@ nullable @*/</code>)</p>
