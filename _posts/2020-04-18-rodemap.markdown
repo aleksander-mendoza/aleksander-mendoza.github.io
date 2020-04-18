@@ -1,0 +1,27 @@
+---
+layout: post
+title:  "Rodemap"
+date:   2020-04-18 14:30:58 +0200
+categories: general
+---
+
+I present you to the world of Formal Methods! This little known field of computer science studies ways of verifying correctness of algorithms. It's a mix of many other branches of mathematics. Here is a rodemap of what you will need in your toolbelt (Don't worry. This blog will cover all of it.)
+
+### Roadmap
+
+First of all, it's hard to imagine proving anything without knowing logic. However, even if you had some basic logic course at your college, it will not be enough. You will need **Hoare-Floyd Logic**. This one is absolutely vital for verifying algorithms. It allows you to logically reason about if-else statements, while-loops, variable assignments and many more. Further it gives rise to **weakest precondition calculus**, which is gives you a systematic way to "solve" correctness of algorithms. You could then tell computers to do most of the hard work for you. Just like calculators can help you with arithmetic, here **SAT solvers** (machines that verify logical formulas) can help you with proofs. You can even extend them to more and more advanced logics. As a result you get machines called **SMT solvers**.  You have to keep cautious, though! There exist problems that are inherently unsolvable. You need to know about them in order to recognize limitations of your solvers. This is where logic intersects with **Computability Theory**. You will learn about the famous **halting problem** and how it impacts automatic verification of correctness. There are good news though! Even though some things cannot be done automatically, you can still prove them yourself and then give the proof to machine to verify. This is where **Type Theory** and **intuitionistic logic** come to play. We will talk about **Curry-Howard isomorphism** and that every algorithm *is* in fact a proof, while specification *is* some theorem. Of course logic can only go so far without eventually entering other fields of mathematics. Type theory builds upon many achievements of **Category Theory** and **Abstract Algebra**. Similarly, computability theory is strongly correlated with **Automata Theory**, which also uses many achievements of algebra. You will see that **finite state automata**, the simplest form of computation, are in essence groups and semigroups in disguise. Further you should dive into connections between automata and **temporal logic**, which can be used for reasoning about the interactions between user and software. You should also learn about computational aspects of abstract algebra - the word problem and various algorithms for solving correctness of algebraic equations. 
+
+
+### Further resources
+
+There are plenty of other resources available online. In order to get better practical understanding about type theory, you should definitely learn [Idris](https://www.idris-lang.org), [Agda](http://learnyouanagda.liamoc.net/pages/introduction.html) or [Coq](https://coq.inria.fr). For seeing Hoare-logic in action you should check out [Java Modeling Language](http://jmlspecs.sourceforge.net) and [ANSI C specification language](https://frama-c.com/acsl.html) along with Frama-C, Krakatoa and Why3 platforms. You can experiment with SMT-solver such as [Alt-Ergo](https://alt-ergo.ocamlpro.com/#tryit), Z3, CVC3, Simplify, E-prover. Some other languages also have support for formal methods. For instance take a look at [Liquid Haskell](https://ucsd-progsys.github.io/liquidhaskell-blog/) or [CakeML](https://cakeml.org). I also highly recommend [this series of lectures](https://cs.anu.edu.au/courses/comp2600/schedule.html) made by Australian National University. Lastly (but perhaps the most importantly) I recommend the following books and articles:
+
+- [Introduction to the Theory of Computation by Michael Sipser](https://www.amazon.com/Introduction-Theory-Computation-Michael-Sipser/dp/113318779X)
+- [Computability: An Introduction to Recursive Function Theory by Nigel Cutland](https://www.amazon.com/Computability-Introduction-Recursive-Function-Theory/dp/0521294657)
+- [Temporal Logic and State Systems by Fred Kröger and Stephan Merz](https://www.amazon.com/Temporal-Systems-Theoretical-Computer-Science/dp/3540674012)
+- [Automata, languages, and machines by Samuel Eilenberg](https://www.amazon.com/Automata-languages-machines-Applied-Mathematics/dp/0122340019)
+- [Formal Semantics of Programming Languages by Glynn Winskel](https://www.amazon.com/Formal-Semantics-Programming-Languages-Winskel/dp/0262731037)
+- [Understanding Formal Methods by Monin, Jean-Francois](https://www.springer.com/gp/book/9781852332471)
+
+
+

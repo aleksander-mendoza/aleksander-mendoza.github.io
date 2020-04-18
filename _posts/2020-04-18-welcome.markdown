@@ -1,0 +1,85 @@
+---
+layout: post
+title:  "Welcome!"
+date:   2020-04-18 14:30:58 +0200
+categories: general
+---
+
+### Hello world
+
+Have you ever wondered if it's possible to write perfect bug-free code? The answer is YES! Here you can learn all about it.
+
+What exactly does it mean for our code to be correct?
+
+
+I can explain it with a simple story. Imagine your college teacher tells you to create an algorithm that finds some specific number in any given set. You think it's a very easy task and begin writing your code. Soon you start wondering "Should I use 32bit or 64bit integers? Or maybe floating points? Are negative values allowed?". So you ask the teacher, and they tell you to only use positive integers of "whatever" size. You are satisfied with this answer and go back to programming. Then you think "Okay, but should I use arrays, linked lists, hash sets, or some other data strucutre? Are the numbers ordered? Should I use binary search?". You ask the teacher again and get some answer. After a couple minutes of coding your algorithm seems to be ready. You run it on a few examples and they work. Then suddenly you start to think "But what if the specified number is not in the set?". You test such scenario and your program crashes. 
+
+Was your program incorrect? The answer is suprisingly "no"! That's because your teacher never actually told you what should happend if the number was missing. 
+
+On the other hand, notice that if you keep asking your teacher all the time about all the possible questions, eventually, the teacher might as well write the code for you. At some point, you have to stop asking.
+
+This is exactly what a **specification** is for! Later I will show you dozens of different approaches for expressing specification but let's start with something simple.
+
+
+### Algorithm is a specification
+
+The most basic form is of specification is the programming language itself! If you think about it, all (compiled) programming languages tell (or "specify") the compiler what should be done. Then your ideas are turned into assembly and machine code. Using the analogy from our story one could say that your programming language is the "teacher", compiler is the "student", and assembly code is the "programming language" that your compiler uses to write programs for you. 
+
+You can take this idea even further and use one algorithm as specification for the other. For example consider this code:
+
+{% highlight python %}
+
+y = 0
+for i in 0 ... x:
+    y += i
+
+{% endhighlight %}
+
+
+Its purpose is to add all numbers from 0 to x together and store the output in y. This algorithm is very easy to understand but it's not very efficent. Usually we call such approaches "naive". A much better approach would be: 
+
+{% highlight python %}
+
+y = x*(x+1)/2
+
+{% endhighlight %}
+
+However, when you see such formula appear suddenly without any context, it's not immediately clear what its purpose is. It requires a bit of math skills and knowledge to understand the mechanism behind it. And this is just a simple example. In real-life problems, the algorithms might get exponentially more complex. (In fact some pieces of code are so difficult, that only a few professors around the world really understand them.) 
+
+Notice that there are those two common trends in programming:
+1. The faster and more optimised an algorithm becomes, the more difficult it is to understand. 
+2. The more complex algorithm we write, the more likely it is to contain mistakes.
+
+This is the exact point at which, treating algorithms as specification, comes in handy. We can write both naive and optimised solutions and the compare them together. For instance we can make a loop like this:
+
+{% highlight python %}
+for x in 0 ... infinity:
+    y = 0
+    for i in 0 ... x:
+        y += i
+    if x != x*(x+1)/2:
+        error
+{% endhighlight %}
+
+Notice that if we could run such test forever, and never generate any errors, then we can be sure that our algorithm is correct! That's because here correctness of one algorithm is defined by the other. You might wonder "What if both algorithms are equally incorrect?". This is the same kind of existential dilemma as asking "Is anything inherently correct? Is there any absolute thruth in the universe?". Unfortunately this is a philosphical question that is out of the scope of this blog.
+
+
+In some scenarions the system might be so complex that it's not even possible to grasp with "naive" solution. For some particular problems all solutions might be inherently "difficult" for us humans to understand. In such cases, we might be forced to create only partial solutions - that is, algorithms that can only return results for some specific inputs. For example, let's say that summing up all numbers is "too difficult" but we at least figured out that for `x=1` we should get `y=1` and for `x=5` is should be `y=15`. Then we write:
+
+{% highlight python %}
+if 1 != 1*(1+1)/2:
+    error
+if 15 != 5*(5+1)/2:
+    error
+{% endhighlight %}
+
+This is exactly what an average programmer usually calls "unit tests".
+
+
+### What's next?
+
+All this has been just a taste. There is much much more to explore. Eventually the goal is to teach you how to prove correctness of extremely complex systems without having to write any tests at all. Don't worry though! The only prerequiste is some basic knowledge of programming. I will explain all the math whenever necessary. Usually there will be simple and practical explanation, but I will also add more advanced sections for those who feeling brave enough.
+
+
+
+
