@@ -31,6 +31,9 @@ github_username:  Alagris
 theme: minima
 plugins:
   - jekyll-feed
+  
+sidebars:
+  - main_sidebar
 
 # Exclude from processing.
 # The following items will not be processed, by default.

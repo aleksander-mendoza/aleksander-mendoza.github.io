@@ -1,0 +1,24 @@
+---
+layout: post
+title:  "Alt-Ergo"
+date:   2020-04-19 12:06:58 +0200
+categories: alt-ergo hoare
+---
+
+
+This time I am going to show you how to use alt-ergo. It's an automated theorem prover. More precisely it's an SMT solver. I will explain in detail what that means in one of the future posts. For now let's just try to gain some intuition.
+
+First step will be to check out their amazing [browser version](https://alt-ergo.ocamlpro.com/try.php) of Alt-Ergo. You should see something like this:
+
+![Alt-Ergo browser version](/assets/alt_ergo_browser.png)
+
+You can type any theorems in the console on the left side. On the right there are plenty of options and even a couple of examples. Try to press the button "Examples" and then select any of them. The sample code should be immediately copied over to the left panel. Finally you can press the "Ask Alt-Ergo" button. After a brief moment you should see some messages in the lower left corner. If everything went ok, you will see
+
+    # [answer] Valid (0.1220 seconds) (5 steps)
+    
+    
+As you can see from the examples, Alt-Ergo requires you to write mathematical theorems in form of goals to prove. For instance here is Pythagorean theorem:
+
+{% highlight Bash%}
+goal pythagorean_theorem
+{% endhighlight  %}

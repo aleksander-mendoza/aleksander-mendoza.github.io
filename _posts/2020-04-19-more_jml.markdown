@@ -1,0 +1,278 @@
+---
+layout: post
+title:  "More on JML"
+date:   2020-04-19 12:06:00 +0200
+categories: jml hoare
+---
+
+# Work in progress
+JML is written entirely in form of Java comments. 
+
+{% highlight Java %}
+
+//This is standard java comment
+/*And this is 
+block comment*/
+
+{% endhighlight %}
+
+     
+
+ To turn them into JML you just need to add @
+
+     //@JML specification
+
+     /*@
+     JML specification
+     @*/
+
+     /*
+     @NOT valid JML
+     @NOT valid JML
+     */
+     
+   
+     
+ So for single line JML use `//@` and for multiline use `/*@ ... @*/`.
+
+ JML uses syntax similar to Java.
+
+     //@ensures x > 0;
+     //@requires Long.MIN_VALUE <= sum && sum <= Long.MAX_VALUE;
+     /*@maintaining sum == 
+         (\sum int j; 
+             i <= j && 0 <= j && j < a.length;
+             (\bigint)a[j]
+         );
+     @*/
+     
+ You can you Java's boolean logic `a && b`, `a || b` and so on. You must separate lines with `;`. You can even use `public`, `private` and `protected`.However, additionally you get a bunch of new keywords like `ensures`, `requires`, `maintaining` and many more. 
+
+
+### Most essential tools
+ 
+ 
+##### requires + ensures
+
+ The core concept of JML is to make sure that methods work correctly. This is what `ensures` and `requires` are all about. Check this out:
+
+     //@requires a>7
+     //@requires b>4
+     //@ensures \result>13
+     int plus(int a, int b){
+         return a+b+1;
+     }
+     
+ It essentially says:
+
+ Method `plus(int a,int b)` requires you to pass arguments such that `a` is greater than 7, and `b` is greater than 12. If you do that, then you can be 100% sure that the result (represented by `\result`) is greater than 13. 
+
+ Now, give yourself some time and think: Is this code correct? If you say "yes", then you are terribly wrong. Copy this code and try to run `openjml -esc YourFile.java`. You will see an error mentioning integer overflow. OpenJML is really smart. It take everything into account. Even such extreme scenarions where sum of two really huge integers causes overflow in modular arithmetic. 
+
+ OpenJML has special keyword `assignable` that restricts what variables you are allowed to mutate. It's a bit tricky to understand sometimes. Consider this:
+
+     public class E{
+         public int f;
+     }
+
+
+     //@assignable e.f;
+     public void f(E e, E e2) {
+         e.f = 4; //this is okay
+         e = new E(); //this is okay too
+         e2.f = 3; //this is not okay
+         e2 = new E(); //this is okay
+     }
+
+ You might think that by specifying only `e.f` as assignable, doing something like `e = new E()` would fail. But actually that's not what `assignable` does. In reality it only restricts you from mutating global and instance varaibles. Local varaibles and parameters are okay to mutate. However, field `f` is not a parameter! It's a completely external varaible and that's why `e2.f = 3` fails! Here is an extensive example:
+
+
+
+     int g;
+
+     public class E{
+         public int f;
+     }
+
+     public E n = new E();
+
+     //@assignable e.f;
+     public void f(E e, E e2,int h) {
+         e.f = 4; //ok
+         e = new E(); //ok
+         e2.f = 3; //not ok
+         e2 = new E(); //ok
+         h = 4; //ok
+         g = 3; //not ok
+         SomeGlobal.staticInt = 5; //not ok
+         n.f = 10; //not ok
+         n = new E(); //not ok
+     }
+
+
+###What is it
+ Ghosts are variables that exist only in JML but are not seen by Java. You can declare them this way:
+
+     //@ghost int integer;
+     //@ghost int integerWithDefaultValue = 3;
+     //@ghost SomeClass name;
+     //@private ghost int privateInteger;
+     //@public ghost int publicInteger;
+     //@ghost int packageInteger;
+     //@protected ghost int protectedInteger;
+
+ ###What it's good for
+
+ #####Keeping track of meta information
+
+ Sometimes when proving your algorithms you might need to keep track of some meta information. A good example of it is ensuring state of your object:
+
+     public class DataBase{
+         //@public ghost boolean connected = false;
+
+         //@requires connected == false;
+         //@ensures connected == true;
+         public void connect(){
+             MySQL.connectStuff();
+             //@set connected = true;
+         } 
+
+         //@requires connected == true;
+         public String queryData(){
+             return MySQL.queryData();
+         }
+     }
+
+ We could assume that `MySQL` is a library class that is not proved in any way but we have to use it. We will just assume that `MySQL` is implemented correctly and blindly trust it. But we can still create a wrapper `DataBase` that will take advanted of JML. 
+
+ We can also use ghost variables with interfaces.
+
+     interface DataBase{
+         //@public instance ghost boolean connected = false;
+         //Notice that we can actually set default value!
+
+         //@requires connected == false;
+         //@ensures connected == true;
+         public void connect();    
+
+         //@requires connected == true;
+         public String queryData();    
+     }   
+
+ We have to use keyword `instance` when declaring ghost in interface because otherwise it would be static. Variables in interfaces are static by default!
+
+ #####Checking method call order
+
+ Another useful example is when you need to ensure that some method was called before other.
+
+     //@ghost boolean calledA = false;
+
+     //@ensures calledA == true;
+     void A(){
+         //@set calledA = true;
+     }
+
+     //@requires calledA == true;
+     void B(){...}
+
+
+
+ JML has some special keywords to manage loops. Prooving loop correctness can sometimes require a bit more attention. Take a look at this example:
+
+     public void f() {
+
+         for (int i = 1; i <= 100; i++) {
+             //@assert i > 0;
+         }
+     }
+
+ It's quite obvious that i>0. JML won't know it unless you explicitly point it out. You must add `maintaining` to make it work:
+
+     public void f() {
+         //@maintaining i>0;
+         for (int i = 1; i <= 100; i++) {
+             //@assert i > 0;
+         }
+     }
+
+ This special keyword works similarly like `ensures` and `requires` except that it's used to specify behaviour of loops instead of functions.
+
+ 
+
+
+
+ As you know, Java is not a functional language and we have to deal with side effects while proving Java code. It's very easy to dismiss all the possibilities that arise from it. Here is an example:
+
+     Camera camera;
+
+     void stopCamera(){
+         if(camera!=null){
+             camera.stopPreview();
+             camera.release();
+             camera = null;    
+         }
+     }
+
+ What do you think is wrong with this code? If you try to verify it, checker will tell you something like 
+
+ > The prover cannot establish an assertion (PossiblyNullDeReference) in method
+
+ That is because you checked 
+
+     if(camera!=null){
+
+ but can you be 100% sure that 
+
+     camera.stopPreview()
+
+ doesn't look like this?
+
+     void stopPreview(){
+         camera = null;
+     }
+
+ The problem is that our example `camera` is an instance variable which makes it theoretically global and vulnerable to side effects. These kinds of errors seem really unintuitive. There are many error such strange messages. At first make you think that JML is flawed but after deeper investigation you actually see taht JML was righ all along. 99.9% of time it's you - the programmer - who misses something. 
+
+ Alright, but how to solve problem of side effects? Here are a few approaches:
+
+ ###ensures + \old
+
+ Specify
+
+     //@ensures camera == \old(camera);
+     void stopPreview(){
+         ...
+     }
+
+ ###assignable
+
+ No external variables can be assigned:
+
+     //@assignable \nothing;
+     void stopPreview();
+
+ Only specific external variables can be assigned:
+
+     //@assignable var0;
+     //@assignable var1;
+     void stopPreview();
+
+ ###pure
+
+ Nothing from outside can be used at all. No reading. No writing. Only input are parameters and only output is the returned value.
+
+     /*@ pure @*/ void stopPreview();
+
+ ###invariant
+
+ You can go even farther and just mark some invariant contraints for specific variable. They will then hold across all methods and classes and if any method attemps to violate them, an error will be returned.
+
+     //@public invariant camera != null;
+
+ Notice that this specific `!= null` inavriant can be simplified with a shorthand:
+
+     public /*@ non_null @*/ Camera camera;
+
+ (and in most cases it's not even necessary because `non_null` is always default in OpenJML and to make something nullable you must explicity specify it with `/*@ nullable @*/`)
+
+
