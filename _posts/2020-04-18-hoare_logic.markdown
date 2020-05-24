@@ -2,7 +2,7 @@
 layout: post
 title:  "Hoare Logic (JML Intro)"
 date:   2020-04-18 14:32:58 +0200
-categories: jml hoare
+categories: hoare
 ---
 
 Perhaps the most important part of formal verification is creating specification with Hoare logic. We will show how it works with help of Java Modeling Language implemented by [OpenJML](http://www.openjml.org). First go to [OpenJML's download page](http://www.openjml.org/downloads/), get their bundle, unzip it and save somewhere. We will need `openjml.jar` from that bundle later. Next create a java file named `Hoare.java`. I will show you what JML is all about with a simple example. 

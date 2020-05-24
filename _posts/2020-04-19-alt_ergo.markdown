@@ -2,7 +2,7 @@
 layout: post
 title:  "Alt-Ergo"
 date:   2020-04-19 12:06:58 +0200
-categories: alt-ergo hoare
+categories: sat
 ---
 
 
