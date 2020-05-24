@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Automata with output"
+title:  "Automata with output (intuition by examples)"
 date:   2020-05-24 01:06:00 +0200
 categories: automata
 ---
@@ -138,7 +138,7 @@ Instead of only registering the latest output, let's concatenate all of it into 
 
 Now the automaon _M<sub>2</sub>_ works like a function that takes string and returns string, hence one may write _M<sub>2</sub> : &Sigma;* &rarr; &Sigma;*_ and _M<sub>2</sub>(&epsilon;)=&epsilon;_, _M<sub>2</sub>(1)=0_, _M<sub>2</sub>(11)=01_ and so on. This "function" is defined on all strings in _&Sigma;*_ (in this case _&Sigma; = {0,1}_ ).
 
-The exact same thing could be done for Moore machines. Consider _M_ again. The "function" _M : &Sigma;* &rarr; &Sigma;*_ would be a bit differently from _M<sub>2</sub>_ because of the it retunrs output "earlier". Hence _M(&epsilon;)=0_, _M(1)=00_, _M(11)=001_, _M(111)=0011_ and so on. 
+The exact same thing could be done for Moore machines. Consider _M_ again. The "function" _M : &Sigma;* &rarr; &Sigma;*_ would behave a bit differently from _M<sub>2</sub>_ because it returns its output "earlier". Hence _M(&epsilon;)=0_, _M(1)=00_, _M(11)=001_, _M(111)=0011_ and so on. 
 
 One should notice that when viewing those automata as functions on strings, then Mealy and Moore machines are __not longer__ equivalent in power!  Moore machine can return output for empty string _M<sub>2</sub>(&epsilon;)=0_, but there is no way to do the same in Mealy machines. Hence Moore machines have more expressive power. They would be equivalent in power if we didn't count the first output of Moore machines.
 
@@ -181,7 +181,7 @@ If we did allow for such nondeterminism, then the automaton would return output 
 TODO
 
 
-### Nondeterministic Mealy and Moore machines
+### Nondeterministic Mealy machines
 
 Multiple output tapes allow us to break the rule of matching prefixes but it comes at the expense of greatly complicating the model and there are still many cases in which it's not expressible enough. A better alternative is the introduction of nondeterminism (string output from transitions is not allowed at this moment).
 
@@ -219,11 +219,151 @@ Let's illustrate how it works with an example
     <td>001</td>
     <td>010, 101 </td>
   </tr>
-
+  <tr>
+    <td>&empty;</td>
+    <td>0011</td>
+    <td>&empty; </td>
+  </tr>
 </tbody>
 </table>
 
 A string is accepted whever there exists a path that starts in initial state, ends in accepting state and labels on the transitions correspond to consecutive symbols in the string. Then you can collect all the outputs produced along the way and concatenate them together to obtain output for a given input string. There might be more than one path possible. In such cases all viable paths are taken into account, and the machine could produce multiple outputs. This situation is illustrated with state  _q<sub>5</sub>_, which can be reached in two different ways, producing two different outputs.
+Nondeterministic Mealy machines which never produce more than one output are called __functional__. It's a special subset of machines that has many interesting properties and we shall discuss it in more depth later.
+
+#### Epsilon transitions
+
+Notice how in this model all outputs and inputs have equal length. One way to extend the power is by allowing strings on transition outputs, but in case of nondeterministic machines, there is one more way to achieve the same result. That is by introducing &epsilon;-transitions.
+
+ ![mealy_nondet_epsilons.png](/assets/mealy_nondet_epsilons.png)
+
+Here it works like this:
+
+
+<table>
+<thead>
+  <tr>
+    <th>states:outputs</th>
+    <th>input</th>
+    <th>returned output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub>:&epsilon;, q<sub>6</sub>:1, q<sub>7</sub>:10</td>
+    <td>&epsilon;</td>
+    <td>1, 10</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub>:1, q<sub>2</sub>:0, q<sub>3</sub>:00</td>
+    <td>0</td>
+    <td>1, 00</td>
+  </tr>
+  <tr>
+    <td>q<sub>4</sub>:10</td>
+    <td>00</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>5</sub>:00</td>
+    <td>000</td>
+    <td>00</td>
+  </tr>
+
+</tbody>
+</table>
+
+There are a couple of very important new features.
+
+1. It finally becomes possible for Mealy machines to return output before reading any input.
+2. Every transition that outputs a string, can be simulated with several &epsilon;-transitions that output single symbol. 
+3. With help of cycles of &epsilon;-transitions, one can return infinitely many outputs for one input string.
+
+The last point requires special consideration. Consider an example of
+
+![mealy_nondet_inf_output.png](/assets/mealy_nondet_inf_output.png)
+
+The output returned for _0_ is of course _1_, but that's not all! You might also take the epsilon transition and then transition over _0_ to produce _01_. There is nothing that stops you from taking the epsilon transition even more times. In fact all the outputs _1_, _01_, _001_, ... are returned for input _0_. The &epsilon;-loop at state q<sub>0</sub> is indeed an &epsilon;-cycle, that generate infinitely many outputs. In fact every automaton that returns inifinite number of outputs but have an &epsilon;-cycle, but the converse is not true. Is is a counter-example:
+
+![mealy_nondet_single_eps_output.png](/assets/mealy_nondet_single_eps_output.png)
+
+This automaton contains two &epsilon;-cycles but none of them leads to infinitely many outputs. The &epsilon;-loop at q<sub>0</sub> returns &epsilon; and concatenation of any number of epsilons still yields an epsilon. The second &epsilon;-loop is at state q<sub>2</sub>, which unfortunately have any way to reach an accepting state. This state is a dead-end. 
+
+#### Epsilon-elimination
+
+One should notice that all the dead-end states can be safely removed without affecting functionality of automaton. Similarly all the &epsilon;-cycles that do not produce any output other than &epsilon; can be replaced with non-&epsilon;-transitions. For example this:
+
+![mealy_eps_cycle.png](/assets/mealy_eps_cycle.png)
+
+needs to become this:
+
+![mealy_eps_cycle.png](/assets/mealy_eps_no_cycle.png)
+
+In general, removing transitions of the form _&epsilon;:&epsilon;_ works the same as removing &epsilon;-transitions from NFA (nondeterministic finite state automata). Removing those of the form _&epsilon;:y_ is a bit more complex. You can replace every transition like this:
+
+![mealy_eliminable_epsilon](/assets/mealy_eliminable_epsilon.png)
+
+with this:
+
+![mealy_eliminated_epsilon](/assets/mealy_eliminated_epsilon.png)
+
+The only problem is when _q<sub>0</sub>_ is the initial state and _q<sub>1</sub>_ is accepting. Then such operation will change the functionality of the machine. 
+
+The most important conclusion is therefore that nondeterministic Mealy machines with &epsilon;-transitions which:
+
+- don't have &epsilon;-cycles
+- don't produce non-empty output for empty input
+
+can be reduced to equivalent &epsilon;-free Mealy machines.
+
+### Functional Mealy machines
+
+As mentioned earlier, functional Mealy machines are a special case of nondeterministic Mealy machines that never produce more than one output.
+
+There are two very important properties:
+
+1. such machines cannot contain &epsilon;-cycles (and even if they do contain, then it must be possible to safely eliminate all the cycles)
+2. at no point throughout the computation there could be a state with more than one associated output. 
+
+The second point requires more explanation. Consider the example
+
+![mealy_multi_output_intermediate](/assets/mealy_multi_output_intermediate.png)
+
+There is only one transition coming to state _q<sub>2</sub>_ and it might seem like there is no way it could possibly return multiple outputs. In one of the previous example we already showed how multiple transitions can reach the same accepting state simultaneously (Look at one of the previous the tables with row reaching _q<sub>5</sub>:{010,101}_). Here the situation is different.
+
+
+<table>
+<thead>
+  <tr>
+    <th>states:outputs</th>
+    <th>input</th>
+    <th>returned output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub>:&epsilon;</td>
+    <td>&epsilon;</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub>:{0,1}</td>
+    <td>0</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub>:{0,1}</td>
+    <td>00</td>
+    <td>0,1</td>
+  </tr>
+  
+
+</tbody>
+</table>
+
+First the state _q<sub>1</sub>_ is reached and it has 2 outputs associated with it. Then only in the next step, those two outputs reach accepting state  _q<sub>2</sub>_ and both outputs are coming from the same transition! The conclusion is as follows: if at any point it's possible to reach some non-accepting state _q<sub>i</sub>_ from two different paths, yielding two different outputs, then either:
+
+- the state _q<sub>i</sub>_ is a dead-end and will never accept.
+- there is some way for _q<sub>i</sub>_ to reach accepting state, hence the automaton is not functional.
 
 
 
