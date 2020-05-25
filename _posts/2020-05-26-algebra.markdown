@@ -1,0 +1,158 @@
+---
+layout: post
+title:  "Abstract algebra for programmers"
+date:   2020-05-25 01:07:00 +0200
+categories: automata
+permalink: /algebra_for_programmers.html
+---
+
+### What is it any why should you care
+
+You know how there are endless discussions about which programming language is better or which snippet of code looks more "elegant". People write entire books about design patterns and your tech lead probably constantly makes negative reviews of your code telling you that you use them wrong. In the eyes of a computer scientist all this is nonsense and here I will try to show you how to think about code like a mathematician. This will really help you a lot in the long run.
+
+### Data structures
+
+#### Products, unions, functions
+
+One of the most fundamental data structures in all of computer science is an integer. In school you probably learned that there is this set of natural numbers _&#8469;_ and that _0&isin;&#8469;_, _1&isin;&#8469;_ and so on. Programmers refer to _&#8469;_ as `int` type, but in fact they are equal `int`=_&#8469;_ (ignoring for a moment the limitation of finite computer memory). 
+
+When you write in C you can create `struct` like this:
+
+{% highlight C %}
+struct A{
+   int x;
+   int y;
+}
+{% endhighlight %}
+
+Mathematician would say _C=&#8469;&times;&#8469;_, because structs are nothing more than Cartesian products. A pair of numbers belongs to set `C` which can be written _(3,5)&isin;C_ but programmer often write `C pair = {3,5}`. More complicated structs are products too. For instance this
+
+{% highlight C %}
+struct B{
+   int x;
+   int y;
+   struct Z z;
+   struct W w;
+}
+{% endhighlight %}
+
+is a product _B=&#8469;&times;&#8469;&times;Z&times;W_. Language C also has the structure of `union`. Have you ever wondered why it's named like this? That's right! This is exactly because it __is__ a union! For example the following snippet
+
+{% highlight C %}
+union D{
+   struct Z z;
+   struct W w;
+}
+{% endhighlight %}
+
+says _D=Z&cup;W_. If _d&isin;Z_ or _d&isin;W_ then _d&isin;D_. Notice how this sentence could have been written  
+"_d&isin;Z_ or _d&isin;W_ &rarr; _d&isin;D_"  
+and you know how in Haskell, Rust and even Python (with type hints) functions are denoted with `->`? Let's rewrite this sentence by replacing "or" with &cup; as follows:  
+"_d&isin;Z&cup;W_ &rarr; _d&isin;D_"  
+A programmer would write this as:
+{% highlight C %}
+D makeD(Z d){ 
+   return D{.z=d}
+}
+D makeD(W d){ 
+   return D{.z=d}
+}
+{% endhighlight %}
+
+Language C does not have function overloading, but in C++ you could write both
+
+{% highlight C %}
+Z d = Z{...};
+D d2 = makeD(d);
+{% endhighlight %}
+
+and
+
+{% highlight C %}
+W d = W{...};
+D d2 = makeD(d);
+{% endhighlight %}
+
+The compiler would figure out which of the overloaded `makeD` functions to use, but from programmer's perspective it looks almost as if the type of `makeD` was _Z &cup; W &rarr; D_. (Also notice how `makeD` resembles a constructor very much. This has special mathematical interpretation, which I will show later.)
+
+This leads us to the third fundamental data structure - functions! That's right! Functions are data structures too. For example
+
+{% highlight C %}
+Y f(X x){...}
+{% endhighlight %}
+
+is mathematically speaking _X&rarr;Y_ and each function are nothing more than a certain subset of _X&times;Y_. One can even denote it as _X&rarr;Y&sub;X&times;Y_. Notice how a programmer could write
+
+{% highlight C %}
+/**Use it to store Fibonacci numbers*/
+struct F{ 
+   int x; //Index of Fibonacci number
+   int y; //Value of Fibonacci number
+}
+{% endhighlight %}
+
+but they might alternatively write this
+
+{% highlight C %}
+int f(int x){ 
+   if(n == 0)return 0;
+   if(n == 1) return 1;
+   return f(n-1) + f(n-2);
+}
+{% endhighlight %}
+
+Every programmer that reads comments around `F` will know that _(x,y)&isin;F_ if and only if _f(x)=y_. However there is nothing that stops the programmer from violating this promise. Whereas `f` doesn't suffer from this problem. Whenever you know _x_ then you can compute the correct _y_. The only problem of `f` is the efficiency. You need to run the function every time you want to access `y`. This is the perfect example of a place where two things are logically equivalent, but differ only in efficiency. If you completely disregared efficiency, then you could indeed store all your data in functions (just as it is in lambda calculus and to some extent in Haskell).
+
+#### Contracts on data structures
+
+You should also notice that `F` is not only the data structure _X&times;Y_. It is also the contract  
+_(x,y)&isin;X&times;Y &hArr; (x,y)&isin;f_  
+In the world of programming there are such contract almost everywhere, but usually you can't see them (There are certain tools that allow you to see the contracts explicitly, like for example [JML](/jml_intro.html)). Sometimes they are written down only in specification like here it is for [Java's equals and hashCode methods](https://docs.oracle.com/javase/7/docs/api/java/lang/Object.html)
+
+> The general contract of hashCode is:
+
+> - Whenever it is invoked on the same object more than once during an execution of a Java application, the hashCode method must consistently return the same integer, provided no information used in equals comparisons on the object is modified. This integer need not remain consistent from one execution of an application to another execution of the same application.
+> - If two objects are equal according to the equals(Object) method, then calling the hashCode method on each of the two objects must produce the same integer result.
+> - It is not required that if two objects are unequal according to the equals(java.lang.Object) method, then calling the hashCode method on each of the two objects must produce distinct integer results. However, the programmer should be aware that producing distinct integer results for unequal objects may improve the performance of hash tables.
+
+One could say that there are only two kinds of bugs in the world of programming: ones that result from faulty specifications and ones that are caused by breaking (or forgetting) contracts.
+
+#### Coproducts
+
+An extremely useful construct in many programming languages is the coproduct. Usually programmers know it under the name of classes.
+
+{% highlight Java %}
+
+interface A { }
+
+class X implements A { }
+
+class Y implements A { }
+
+{% endhighlight %}
+
+Here the set `Y` is the coproduct of `X` and `Y`. In set theory it is often know as disjoin union and is denoted by _Y=X+Y_. Such union is nothing more than _X+Y=X&times;{0} &cup; Y&times;{1}_. In `C` the equivalent way to construct it is using
+
+{% highlight Java %}
+
+struct A {
+   union{
+      struct X x;
+      struct Y y;
+   };
+   int type;
+};
+
+{% endhighlight %}
+
+
+
+#### Recursive data structures
+
+A very important kind of data structures are the ones that contain themselves. 
+TODO
+
+
+
+
+
