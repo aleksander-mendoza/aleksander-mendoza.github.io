@@ -3,6 +3,7 @@ layout: post
 title:  "Automata with output (intuition by examples)"
 date:   2020-05-24 01:06:00 +0200
 categories: automata
+permalink: /transducers_intuitively.html
 ---
 
 
@@ -87,11 +88,11 @@ One way to define language recognized by Moore machine is by accepting only thos
 
 then machine _M/1_ becomes
 
-![moore_01star_image_1.png](/assets/moore_01star_image_1.png)
+![moore_and_gate_image_1.png](/assets/moore_and_gate_image_1.png)
 
 and _M/0_ becomes
 
-![moore_01star_image_0.png](/assets/moore_01star_image_0.png)
+![moore_and_gate_image_0.png](/assets/moore_and_gate_image_0.png)
 
 For Mealy machines, such approach will not work but we can do something different. Instead of modeling input language, let's try to model both input and output language together. For example consider _M<sub>2</sub>_ to be the automaton from before:
 
@@ -150,7 +151,7 @@ Let's extend the two models with accepting states and see what happens. Let _M<s
 
 The function _M<sub>3</sub> : &Sigma;* &rarr; &Sigma;*_ is no longer a an actual function, because it's domain is not _&Sigma;*_. In some places there are now "holes". Just like division by zero is not defined, here the output of _M<sub>3</sub>(0)_ is not defined. The only inputs _x_ for which _M<sub>3</sub>(x)_ is defined are those accepted by the underlying atomaton 
 
-![moore_01star_image_1.png](/assets/moore_01star_image_1.png)
+![moore_and_gate_image_1.png](/assets/moore_and_gate_image_1.png)
 
 Such functions with some spots missing are called <ins>partial functions</ins> and here we will denote them with &#8640; . Hence we can write _M<sub>3</sub> : &Sigma;* &#8640; &Sigma;*_ and in this example the behaviour can be illustrated with the examples _M<sub>3</sub>(&epsilon;)=&empty;_, _M<sub>3</sub>(1)=&empty;_, _M<sub>3</sub>(11)=01_, _M<sub>3</sub>(111)=011_,  _M<sub>3</sub>(1110)=&empty;. The symbol of empty set &empty; denotes "hole" in function.
 
@@ -315,6 +316,23 @@ The most important conclusion is therefore that nondeterministic Mealy machines 
 
 can be reduced to equivalent &epsilon;-free Mealy machines.
 
+#### Projections
+
+For every Mealy machine (no matter which variant of the model you choose) it's possible to build a finite state automaton that accepts  the input language. We already showed it in one of previous examples. Given a Mealy machine:
+
+![mealy_and_gate_accepting.png](/assets/mealy_and_gate_accepting.png)
+
+you can build finite state machine that accepts input lagnuage:
+
+![moore_and_gate_image_1.png](/assets/moore_and_gate_image_1.png)
+
+The interesting part is that you can do the same for output language:
+
+![moore_and_gate_image_1.png](/assets/moore_and_gate_out_proj.png)
+
+but this time, the resulting finite state machine may be nondeterministic even in cases when Mealy machine was deterministic (notice how there are two transitions over _0_ coming out of state _q<sub>0</sub>_).
+This construction is achieved by "erasing" output labels (when building automaton that accepts input language) or input labels (when building automaton that accepts output language). The only complications is when using Mealy machine with entire strings on output labels. It's not possible to just "erase" input labels and call it done. Instead, we need to first replace string transitions with multiple &epsilon;-transitions and only then we can erase the input labels.
+
 ### Functional Mealy machines
 
 As mentioned earlier, functional Mealy machines are a special case of nondeterministic Mealy machines that never produce more than one output.
@@ -362,9 +380,97 @@ There is only one transition coming to state _q<sub>2</sub>_ and it might seem l
 
 First the state _q<sub>1</sub>_ is reached and it has 2 outputs associated with it. Then only in the next step, those two outputs reach accepting state  _q<sub>2</sub>_ and both outputs are coming from the same transition! The conclusion is as follows: if at any point it's possible to reach some non-accepting state _q<sub>i</sub>_ from two different paths, yielding two different outputs, then either:
 
-- the state _q<sub>i</sub>_ is a dead-end and will never accept.
+- the state _q<sub>i</sub>_ is a dead-end and will never accept, therefore it might be deleted altogether.
 - there is some way for _q<sub>i</sub>_ to reach accepting state, hence the automaton is not functional.
 
+#### Checking if automaton is functional
+
+The task of checking whether given nondetermministic machine is functional, is a coNP-hard problem. The exact proof of it requires understanding of complexity theory, so I will just omit it here. There is however, one thing we can do in order to more efficienlty sieve out some of the cases. The procedure has three steps. First we remove all dead-end states. Second we need to check if there is a state, that has two transitions leading to the same end state over the same symbol and producing different outputs. In the example above this is the case for _q<sub>0</sub>_ which has two transitions leading to _q<sub>1</sub>_. If we find such state, then we know that the automaton cannot be functional. If no such state is found then we proceed further. The third and last step of this test relies on powerset construction. In the example above, the automaton consists of 3 states: _q<sub>0</sub>_, _q<sub>1</sub>_, _q<sub>2</sub>_. There are the following combinations of those states:
+
+- { _q<sub>0</sub>_ } - this is the initial combination
+- { _q<sub>1</sub>_ } - combination is obtained from { _q<sub>0</sub>_ } be transitioning over _0_.
+- { _q<sub>2</sub>_ } - combination is obtained from { _q<sub>1</sub>_ } be transitioning over _0_.
+- { _q<sub>0</sub>_ , _q<sub>1</sub>_} - this combination is unreachable
+- { _q<sub>1</sub>_ , _q<sub>2</sub>_}
+- { _q<sub>2</sub>_ , _q<sub>0</sub>_}
+- {  _q<sub>0</sub>_ , _q<sub>1</sub>_ , _q<sub>2</sub>_}
+- {  } - the empty combination of states can be reached from { _q<sub>2</sub>_ } by transitioning over _0_, or from any other combination by transitioning over _1_.
+
+In the tables above you can often find examples that reach combinations of more than one state. Now the test relies on finding all reachable combinations. Then for each letter _x_ of alphabet _&Sigma;*_ we need to check if there exist two states that transition to the same state over _x_. For example here 
+
+ ![mealy_nondet_multi_output.png](/assets/mealy_nondet_multi_output.png)
+ 
+it is possible to reach combination of states _q<sub>4</sub>, q<sub>3</sub>_ that transition to _q<sub>5</sub>_ over _1_. If it's not possible to find such pair of states, then the automaton is funtional. However, if we find such states, it doesn't immediately imply that the automaton is not functional. For example this automaton:
+
+ ![mealy_func](/assets/mealy_func.png)
+ 
+is functional despite the fact, that there are two paths with the same input labels _00_ that lead to state _q<sub>2</sub>_. Both of these paths produce __the same__ output _0_, therefore the automaton is functional.
+ 
+This concludes the procedure for checking if automaton is functional. It's not a full check! It can only detect some cases, while some special scenarios slip through this test (like the example above). But most of the "interesting" and important cases can be detected this way. Performing a full definitive check would require a lot more work and more time.
+
+### Weighted automata
+
+Suppose that you are only interested in functional Mealy machines and you want to find some way of prioritizing certain output over the other. This way, whenever there appears ambiguity/conflict you will just pick one output with higher priority. By adding priority, all nondeterministic automata can be turned into functional Mealy automata (but this of course changes their functionality, so the models are not equivalent). For example this automaton:
+
+ ![mealy_weighted.png](/assets/mealy_weighted.png)
+
+uses alphabet _{a,b}_ but you can see two stransitions that have 3 components. That third component is the weight, and every time the weight is specified directly it is assumed to be zero. For instance _a:b_ actually stands for _a:b:0_. The way this automaton works is as follows:
+
+<table>
+<thead>
+  <tr>
+    <th>states:outputs</th>
+    <th>input</th>
+    <th>returned output</th>
+    <th>comment</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub>:&epsilon;</td>
+    <td>&epsilon;</td>
+    <td>&empty;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub>:b, q<sub>2</sub>:a</td>
+    <td>a</td>
+    <td>&empty;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>q<sub>3</sub>:aa</td>
+    <td>aa</td>
+    <td>aa</td>
+    <td>q<sub>3</sub> only received output from q<sub>2</sub> because it came through a transition with higher priority 0.5 > 0.3</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub>:b</td>
+    <td>b</td>
+    <td>&empty;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>q<sub>3</sub>:bb</td>
+    <td>ba</td>
+    <td>bb</td>
+    <td>This time the input came from the transition with lower priority because state q<sub>2</sub> hasn't accumulated any output at this point</td>
+  </tr>
+</tbody>
+</table>
+
+For all those readers who already know something about transducers and probabilistic automata, here is an important note: those weight are not (yet) probabilities. They are not multiplied together and are not accumulated in any way. I will write specifically about probabilistic automata below.
+
+It might seem like adding such weights is another significant extention that increases the power of automata. This is not actually true. Weighted &epsilon;-free Mealy machines are equivalent in power with functional &epsilon;-free Mealy machines. Many weighted Mealy machines with &epsilon;-transitions can also be converted to equivalent automata without weights, but in some cases it's not possible. The exact details are complicated so I omit them here.
+
+You might ask yourself, why do we even bother with weighted Mealy machines, if they don't increase expressive power. There are two reasons:
+
+1. weighted Mealy machines often usually smaller than their corresponding non-weighted counterparts. It can be proved that there exist weighted Mealy machines that are exponentially smaller than their equivalent functional Mealy machines.
+2. it's a good introduction to probabilistic Mealy machines
+
+### Probabilistic automata 
+
+TODO
 
 
 
