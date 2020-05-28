@@ -273,6 +273,14 @@ Here it works like this:
 </tbody>
 </table>
 
+With such model every string output 
+
+![mealy_string_output](/assets/mealy_string_output.png)
+
+can be simulated using
+
+![mealy_string_epsilon_output](/assets/mealy_string_epsilon_output.png)
+
 There are a couple of very important new features.
 
 1. It finally becomes possible for Mealy machines to return output before reading any input.

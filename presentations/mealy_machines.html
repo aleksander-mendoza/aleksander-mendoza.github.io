@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      table {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      table td, table th {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+
+      table tr:nth-child(even){background-color: #f2f2f2;}
+
+      table tr:hover {background-color: #ddd;}
+
+      table th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #4CAF50;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Properties and Hierarchy of 
+# Mealy machines
+
+---
+
+# What's a Mealy machine
+
+
+
+![and_gate](/assets/mealy_and_gate.png)
+
+It's an extension of finite state automata with output.
+
+Initially created to model behaviour of cequential circuits.
+
+Later it found applications in natural language processing.
+
+Just like FSA correspond to rational languages,
+Mealy machines describe rational relations.
+
+---
+
+# Moore's approach
+
+![and_gate](/assets/moore_and_gate.png)
+
+
+It's equivalent to Mealy machines.
+
+The primary difference is that Moore machines are syncronized with input, 
+while Mealy machines are asynchronous.
+
+
+
+---
+
+# Computations with Mealy and Moore machines
+
+
+<table >
+
+<thead>
+  <tr>
+    <th>state</th>
+    <th>input</th>
+    <th>Mealy output</th>
+    <th>Moore output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>&epsilon;</td>
+    <td>N/A</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub></td>
+    <td><ins>1</ins></td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td><ins>11</ins></td>
+    <td>1</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>1<ins>11</ins></td>
+    <td>1</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>11<ins>10</ins></td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+</tbody>
+</table>
+![and_gate](/assets/mealy_and_gate.png)
+
+---
+
+
+# Output as string
+
+<table>
+<thead>
+  <tr>
+    <th>state</th>
+    <th>input</th>
+    <th>output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>&epsilon;</td>
+    <td>&epsilon;</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub></td>
+    <td>1</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>11</td>
+    <td>01</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>111</td>
+    <td>011</td>
+  </tr>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>1110</td>
+    <td>0110</td>
+  </tr>
+</tbody>
+</table>
+![and_gate](/assets/mealy_and_gate.png)
+
+---
+
+
+# Adding accepting states
+
+
+![mealy_and_gate_accepting.png](/assets/mealy_and_gate_accepting.png)
+
+Such Mealy machine becomes a partial function &Sigma;\* &rarr; &Sigma;\*
+
+
+For instance let _M_ be the Mealy machine above, then  
+_M(&epsilon;)=&empty;_  
+_M(1)=&empty;_  
+_M(11)=01_  
+_M(111)=011_  
+_M(1110)=&empty;_   
+
+Mealy machines without accepting states are just the same as prefix-closed Mealy machines with accepting states. 
+
+
+---
+
+
+# Nondeterministic Mealy machines
+
+![mealy_nondet.png](/assets/mealy_nondet.png)
+
+Every computational model has some nondeterministic counterpart. 
+The same holds in case of Mealy machines.
+
+It works similarly to pushdown automata. Every nondeterministic branch of computation tree
+has its own copy of stack. Here it's the same but instead of stack there is output.
+Indeed, Mealy machines could be viewed as a special case of pushdown automata, one that is not allowed
+to pop elements off the stack (so it's like a write-only tape).
+
+---
+
+
+# Adding &epsilon;\-transitions
+
+![mealy_nondet_epsilons.png](/assets/mealy_nondet_epsilons.png)
+
+
+<table>
+<thead>
+  <tr>
+    <th>states:outputs</th>
+    <th>input</th>
+    <th>returned output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub>:&epsilon;, q<sub>6</sub>:1, q<sub>7</sub>:10</td>
+    <td>&epsilon;</td>
+    <td>1, 10</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub>:1, q<sub>2</sub>:0, q<sub>3</sub>:00</td>
+    <td>0</td>
+    <td>1, 00</td>
+  </tr>
+  <tr>
+    <td>q<sub>4</sub>:10</td>
+    <td>00</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>5</sub>:00</td>
+    <td>000</td>
+    <td>00</td>
+  </tr>
+
+</tbody>
+</table>
+
+---
+
+# Functional Mealy machines
+
+Nondeterministic Mealy machine which always returns at most one output is called functional.
+
+Here is the summary so far:
+
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Relations</th>
+    
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Mealy machines without accepting states</td>
+    <td>&Sigma;* &rarr; &Sigma;*</td>
+  </tr>
+  <tr>
+    <td>Mealy machine with accepting states</td>
+    <td>&Sigma;* &#8640; &Sigma;*</td>
+  </tr>
+  <tr>
+    <td>Mealy machine with nondeterminism</td>
+    <td>&Sigma;* &times; &Sigma;*</td>
+  </tr>
+  <tr>
+    <td>Mealy machine with epsilons</td>
+    <td>&Sigma;* &times; &Sigma;*</td>
+  </tr>
+  <tr>
+    <td>Functional Mealy machines</td>
+    <td>&Sigma;* &#8640; &Sigma;*</td>
+  </tr>
+</tbody>
+</table>
+
+---
+
+
+# Nondeterminisim has strictly more power 
+
+As it was shown before, both deterministic machines (with accepting states) and functional machines can describe relations of the form _&Sigma;* &#8640; &Sigma;*_.
+
+However, certain languages cannot be related using deterministic machines. Suppose _M_ is a Mealy machine.
+If it is deterministic then for every _x,z&isin; &Sigma;*_ there exists _y&isin; &Sigma;*_ such that _M(xz)=M(x)y_. 
+
+The nondeterministic machine below breaks this rule
+
+![mealy_nondet.png](/assets/mealy_nondet.png)
+
+---
+
+
+# &epsilon;-transitions strictly increase power 
+
+Mealy machines in their very nature (unlike Moore machines) cannot produce any output before reading first input. This means that for any machine _M_ the output for _M(&epsilon;)_ is either _M(&epsilon;)=&empty;_ or _M(&epsilon;)=&epsilon;_.
+
+Adding &epsilon; transitions allows to break this limitation
+
+![mealy_nondet_epsilons.png](/assets/mealy_nondet_epsilons.png)
+
+Here you can see _M(&epsilon;)={10,1}_.
+
+---
+
+# Output of arbitrary size
+
+The deterministic Mealy machines have one more limitation. 
+
+Their output is always of the exact same length as input. because each transition produces exactly one output symbol. If we allow transitions to produce strings, then we can break this limitation.
+
+The rule _&forall;<sub>x,z&isin; &Sigma;*</sub>&exist; <sub>y&isin; &Sigma;*</sub>  M(xz)=M(x)y_ still holds.
+
+Every transitions with string output
+
+![mealy_string_output](/assets/mealy_string_output.png)
+
+can be emulated using epsilons
+
+![mealy_string_epsilon_output](/assets/mealy_string_epsilon_output.png)
+
+
+---
+
+
+# Epsilon cycles
+
+An epsilon cycle is a cycle of transitions such that all of them have &epsilon; as input label.
+The simplest example is
+
+![mealy_nondet_inf_output](/assets/mealy_nondet_inf_output.png)
+
+A Mealy machine has some _x&isin; &Sigma;*_ such that _|M(x)|=&infin;_ only if it contains epsilon cycle.
+The converse is not true as shown here:
+
+![mealy_nondet_single_eps_output](/assets/mealy_nondet_single_eps_output.png)
+
+---
+
+
+# Eliminating epsilon transitions
+
+It's not always possible. We can at most replace this:
+
+![mealy_eliminable_epsilon](/assets/mealy_eliminable_epsilon.png)
+
+with this:
+
+![mealy_eliminated_epsilon](/assets/mealy_eliminated_epsilon.png)
+
+but it doesn't work for &epsilon;-cycles and cases when q<sub>0</sub> is initial.
+
+---
+
+# Deciding functional Machines
+
+Telling apart functional Mealy machines from non-functional ones is coNP-hard.
+A full proof of it can be found in my article.
+
+---
+
+# Weighted Mealy machines
+
+![mealy_weighted.png](/assets/mealy_weighted.png)
+
+This is not a probabilistic automaton. 
+
+The purpose of it is to disambiguate conflicting outputs of nondeterministic machines. It assigns priority to some transitions over the other.
+
+All weighted automata of this form are equivalent with functional machines.
+
+A weighted automaton with all transitions having distinc weights is guaranteed to be functional.
+
+---
+
+# Executing Mealy machine with weights
+
+
+<table>
+<thead>
+  <tr>
+    <th>states:outputs</th>
+    <th>input</th>
+    <th>returned output</th>
+    <th>comment</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub>:&epsilon;</td>
+    <td>&epsilon;</td>
+    <td>&empty;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub>:b, q<sub>2</sub>:a</td>
+    <td>a</td>
+    <td>&empty;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>q<sub>3</sub>:aa</td>
+    <td>aa</td>
+    <td>aa</td>
+    <td>q<sub>3</sub> only received output from q<sub>2</sub> because it came through a transition with higher priority 0.5 > 0.3</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub>:b</td>
+    <td>b</td>
+    <td>&empty;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>q<sub>3</sub>:bb</td>
+    <td>ba</td>
+    <td>bb</td>
+    <td>This time the input came from the transition with lower priority because state q<sub>2</sub> hasn't accumulated any output at this point</td>
+  </tr>
+</tbody>
+</table>
+
+---
+
+# Transducers
+
+Transducers are a probabilistic version of Mealy machines. All weights on outgoing transition for a given state must sum up to 1. 
+
+Transducers don't describe relations _&Sigma;\* &times; &Sigma;\*_. Instead they describe probabilistic models _&Sigma;\* &times; &Sigma;\* &rarr; &#8477;_.
+
+
+---
+
+# Hierarchy
+
+In Chomsky hierarchy FSA and NFA are at equal level. For Mealy machines it's much more complicated than than. 
+
+Prefix-closed Mealy machines < deterministic machines < machines with string-output transitions < functional machines = weighted machines < nondeterministic with with string-output transitions < machines &epsilon;-transitions without &epsilon;-cycles < machines with &epsilon;-cycles allowed
+
+Further up are pushdown Mealy machines with a similarly complex hierarchy.
+
+Transducers are a completely different branch.
+
+---
+
+# Applications
+
+
+Gramatical inference is a field of machine learning in which the learner tries to guess the language model based on some examples. 
+
+LearnLib (https://learnlib.de) has several inference algorithms for Mealy machines.
+
+Sometimes it's useful to add special kind of reject states to model negative examples.
+
+One can model probabilities over text samples with transducers. They are heaily used for machine translation and natural language processing.
+
+
+---
+
+# Applications 2
+
+
+Formal methods is a field largely focused on all kinds of formal properties of algorithms and machines.
+Mealy machines were initially developed for formal specification of sequential systems. 
+
+Moore machines play really well with temporal logic. One can then build logical formulas that assert 
+all kinds of dependencies between outputs and states.
+
+
+---
+
+# Applications 3
+
+Building solit theoretical foundations for developlment of regular expression compiler, was the primary driving force for all this reasearch.
+
+All the proofs and formal definitions can be found in my [article](/pdf/functional_mealy.pdf). 
+
+
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>

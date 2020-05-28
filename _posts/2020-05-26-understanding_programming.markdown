@@ -412,8 +412,9 @@ Almost everything in a programming has some mathematical interpretation. Here is
 - every hash map `{X:Y}` is a partial function _X;&#8640;Y_
 - every function `Y f(X x)` that uses global variable `Z z` is actually not of the type _X&rarr;Y_ but instead it is implicitly _X&times;Z&rarr;Y_. 
 - every function `Y f(X x)` that uses assigns variable `Z z` is actually not of the type _X&rarr;Y_ but instead it is implicitly _X&rarr;Y&times;Z_. 
-- A function that returns pointer to another function can be thought of as a higher order function _X&rarr;(Y&rarr;Z)_ or simply _X&rarr;Y&rarr;Z_ (these two notations are equivalent)
-- A function that takes a pointer to another function can be thought of as a higher order function _(X&rarr;Y)&rarr;Z_
+- all functions with side-effects correspond to monads (like in Haskell). 
+- a function that returns pointer to another function can be thought of as a higher order function _X&rarr;(Y&rarr;Z)_ or simply _X&rarr;Y&rarr;Z_ (these two notations are equivalent)
+- a function that takes a pointer to another function can be thought of as a higher order function _(X&rarr;Y)&rarr;Z_
 
 
 
