@@ -10,9 +10,9 @@ permalink: /understanding_programming.html
 
 You know how there are endless discussions about which programming language is better or which snippet of code looks more "elegant". People write entire books about design patterns and your tech lead probably constantly makes negative reviews of your code telling you that you use them wrong. In the eyes of a computer scientist all this is nonsense and here I will try to show you how to think about code like a mathematician. This will really help you a lot in the long run.
 
-### Data structures
 
-#### Products, unions, functions
+
+### Products, unions, functions
 
 One of the most fundamental data structures in all of computer science is an integer. In school you probably learned that there is this set of natural numbers _&#8469;_ and that _0&isin;&#8469;_, _1&isin;&#8469;_ and so on. Programmers refer to _&#8469;_ as `int` type, but in fact they are equal `int`=_&#8469;_ (ignoring for a moment the limitation of finite computer memory). 
 
@@ -103,7 +103,7 @@ int f(int x){
 
 Every programmer that reads comments around `F` will know that _(x,y)&isin;F_ if and only if _f(x)=y_. However there is nothing that stops the programmer from violating this promise. Whereas `f` doesn't suffer from this problem. Whenever you know _x_ then you can compute the correct _y_. The only problem of `f` is the efficiency. You need to run the function every time you want to access `y`. This is the perfect example of a place where two things are logically equivalent, but differ only in efficiency. If you completely disregared efficiency, then you could indeed store all your data in functions (just as it is in lambda calculus and to some extent in Haskell).
 
-#### Contracts on data structures
+### Contracts on data structures
 
 You should also notice that `F` is not only the data structure _X&times;Y_. It is also the contract  
 _(x,y)&isin;X&times;Y &hArr; (x,y)&isin;f_  
@@ -117,7 +117,7 @@ In the world of programming there are such contract almost everywhere, but usual
 
 One could say that there are only two kinds of bugs in the world of programming: ones that result from faulty specifications and ones that are caused by breaking (or forgetting) contracts.
 
-#### Coproducts
+### Coproducts
 
 An extremely useful construct in many programming languages is the coproduct. Usually programmers know it under the name of classes.
 
@@ -151,7 +151,7 @@ struct A {
 
 Of course, this structure is a very simplified version of classes. It lacks abstract methods and inheritance but in essence, all classes are just fancy coproducts with some bells and whistles.
 
-#### Tuples
+### Tuples
 
 Notice how I gave you example of this function
 
@@ -194,7 +194,7 @@ Y y = f();
 because you apply the nullary tuple `()` to `f`. Here the type of `f` is _()&rarr;Y_ which is also the set with only one element
 `{((),y)} = f` or alternatively _((),y)&isin;f_.
 
-#### Empty sets
+### Empty sets
 
 You use empty sets in programming all the time without even knowing it. That's mostly because programmers have a different name for it. They call it `void`. Ask yourself, what value is of the type `void`? Absolutely none! You cannot write
 
@@ -233,16 +233,16 @@ and of course _x &notin; &empty;_ always holds true, which leaves us with just
 > x &isin; &empty; &rarr; x &isin; X
 
 
-#### Optional types
+### Optional types
 
 A very important special case of coproducts are the so called "optionals" (although it's actually mathematical terminology). 
-An optional is nothing more than a set _X+&empty;_. You could encode this programmatically more or less as:
+An optional is nothing more than a set _X+()_. You could encode this programmatically more or less as:
 
-{% highlight Java %}
+{% highlight C %}
 struct A {
    union{
       struct X x;
-      void y;
+      () y; //this is not valid C
    };
    /** 
    * if type==0 then use x
@@ -273,10 +273,10 @@ However, most of the time you actually don't even need to make such complicated 
 X * x;  
 {% endhighlight %}
 
-because `x` might either be some value of `X` or it might be a null pointer. For this reason every pointer is optional and is of type 
-_X+&empty;_
+because `x` might either be some value of `X` or it might be a null pointer. For this reason every pointer is an optional value of type 
+_X+()_.
 
-#### Partial functions
+### Partial functions
 
 Sometimes it happens that certain tasks are impossible. You can't stand up if you are not sitting/laying in the first place. It makes no sense to open the door, which is already open. In the world of mathematics you cannot, for instance, divide by 0 or take derivative of nondifferentiable function. All such phenomena can be described using partial function. 
 
@@ -309,7 +309,7 @@ This version will cause segmentation fault and crash the application if you prov
 
 In mathematics partial function is defined as any subset of total function. All the "standard" mathematical functions are total (they return some value for all arguments). 
 
-#### Relations
+### Relations
 
 Partial functions are a generalization of total functions. Relations are even farther generalisation of partial functions. Here are their (almost) mathematical definitions.
 
@@ -345,7 +345,7 @@ boolean f(X x, Y y){...}
 
 They return `true` if the two elements are related and `false` otherwise. For example the equality test `==` is a relation on integers.
 
-When it comes to partial functions, there is also one more alternative way of representing them (instead of crashes and exceptions). This representation stems from that alternative definition that was provided above. Namely, every function of type _X &rarr; Y+&empty;_ can be interpreted as partial. This is exactly what Rust went for in their language. 
+When it comes to partial functions, there is also one more alternative way of representing them (instead of crashes and exceptions). This representation stems from that alternative definition that was provided above. Namely, every function of type _X &rarr; Y+()_ can be interpreted as partial. This is exactly what Rust went for in their language. 
 
 {% highlight Rust %}
 fn f(X x) -> Option<Y>{...}
@@ -358,7 +358,7 @@ Y * f(X x) {...}
 {% endhighlight %}
 
 
-#### Recursive data structures
+### Recursive data structures
 
 A very important kind of data structures are the ones that contain themselves. For example, have you heard the mathematical definition of numbers? It is known under the name of Peano arithmetic and it can be summarised in the following way:
 
@@ -403,6 +403,17 @@ boolean equals(Number * x, Number * y){
 {% endhighlight %}
 
 Notice that this function only returns `true` and in all other cases it just crashes. It might look impractical but it's "correct". Our inductive definition only defined when two numbers are equal. It never said that some numbers might not be equal or even that there is such a concept as inequality. In other words, this definition describes a partial function. Of course, you can try to make a different definition that would be total and tell whether numbers are equal or inequal. I leave it as a little challenge for the reader.  
+
+### Other data structures
+
+Almost everything in a programming has some mathematical interpretation. Here is a short list of other interesting insights:
+
+- every array `X[]` is a partial function _&#8469;&#8640;X_
+- every hash map `{X:Y}` is a partial function _X;&#8640;Y_
+- every function `Y f(X x)` that uses global variable `Z z` is actually not of the type _X&rarr;Y_ but instead it is implicitly _X&times;Z&rarr;Y_. 
+- every function `Y f(X x)` that uses assigns variable `Z z` is actually not of the type _X&rarr;Y_ but instead it is implicitly _X&rarr;Y&times;Z_. 
+- A function that returns pointer to another function can be thought of as a higher order function _X&rarr;(Y&rarr;Z)_ or simply _X&rarr;Y&rarr;Z_ (these two notations are equivalent)
+- A function that takes a pointer to another function can be thought of as a higher order function _(X&rarr;Y)&rarr;Z_
 
 
 
