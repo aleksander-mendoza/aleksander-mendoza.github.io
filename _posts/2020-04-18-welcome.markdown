@@ -4,7 +4,9 @@ title:  "Welcome!"
 date:   2020-04-18 14:30:58 +0200
 categories: general
 ---
-
+**Contents**
+* TOC
+{:toc}
 ### Hello world
 
 Have you ever wondered if it's possible to write perfect bug-free code? The answer is YES! Here you can learn all about it.

@@ -6,7 +6,9 @@ categories: automata
 permalink: /transducers_intuitively.html
 ---
 
-
+**Contents**
+* TOC
+{:toc}
 Note: This post assumes you already have basic understanding of finite state machines and formal languages.
 
 
@@ -566,7 +568,11 @@ This in fact is equivalent to using &epsilon;-transitions as follows:
 
 ![mealy_and_moore_as_epsilon](/assets/mealy_and_moore_as_epsilon.png)
 
-The truly interesting aspect of such hybrid machines becomes visible when we also allow for entire strings on transition outputs. Then the model becomes equivalent in power so functional machines, without requiring use of any &epsilon;-transitions! There is a procedure for converting any functional (nondeterministic with &epsilon;-transitions but without &epsilon;-cycles) Mealy machine to hybrid Mealy-Moore machine. I will explain it with the example:
+The truly interesting aspect of such hybrid machines becomes visible when we also allow for entire strings on transition outputs. Then the model becomes equivalent in power so functional machines, without requiring use of any &epsilon;-transitions! There is a procedure for converting any functional (nondeterministic with &epsilon;-transitions but without &epsilon;-cycles) Mealy machine to hybrid Mealy-Moore machine. I will explain it below with the examples
+
+#### Converting functional machines
+
+Consider the folowing nondeterministic automaton.
 
 ![mealy_func_to_mealy_moore_1](/assets/mealy_func_to_mealy_moore_1.png)
 

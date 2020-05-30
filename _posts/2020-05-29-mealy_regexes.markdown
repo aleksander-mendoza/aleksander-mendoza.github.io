@@ -1,11 +1,12 @@
 ---
 layout: post
 title:  "Regexes for Mealy machines"
-date:   2020-05-28 01:07:00 +0200
+date:   2020-05-29 01:07:00 +0200
 categories: automata
 permalink: /mealy_regexes.html
 ---
-
+* TOC
+{:toc}
 Every finite state automaton can be represented with a regular expression and vice versa. The same holds true for Mealy machines but the expressions are different. There are two approaches to them: 
 - one that uses "standrad" regular expressions and extends them with output
 - one that treats everything as input-output pairs from the very beginning.

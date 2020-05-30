@@ -5,7 +5,9 @@ date:   2020-05-25 01:06:00 +0200
 categories: automata
 permalink: /compiling_regexes.html
 ---
-
+**Contents**
+* TOC
+{:toc}
 ### Backtracking
 
 There are several ways to run regexes. The main two approaches are with backtracting and by compiling to automata. Most (all?) programming languages that have support for regexes don't actually use automata at all, but instead they use backtracking. Here is a simplified implementation of such algorithm:
@@ -168,7 +170,7 @@ The idea is based around keeping track of one initial state and one accepting st
 ### Glushkov's construction
 
 
-This algorithm addresses many problems of Thompson's construction construction. Here we will produce automata that have significantly less states and have no &epsilon;-transitions. The basic idea is to associate states of produced automaton with letters in regular expression. For example consider `a(c|b)*` again. We should create 4 states: one for each of the latters `a`, `b`, `c` and one extra state that will be initial (kind of as if that fourth state stood for &epsilon;). Let state A be for `a`, B for `b`, C for `c` and Q for &epsilon;
+This algorithm addresses many problems of Thompson's construction. Here we will produce automata that have significantly less states and have no &epsilon;-transitions. The basic idea is to associate states of produced automaton with letters in regular expression. For example consider `a(c|b)*` again. We should create 4 states: one for each of the latters `a`, `b`, `c` and one extra state that will be initial (kind of as if that fourth state stood for &epsilon;). Let state A be for `a`, B for `b`, C for `c` and Q for &epsilon;
 
 ![Glushkovs_construction_states](/assets/Glushkovs_construction_states.png)
 
@@ -200,10 +202,74 @@ Localization of a language can be performed by renaming every letter with a new 
 
 ![Glushkovs_construction_WXYZ](/assets/Glushkovs_construction_WXYZ.png)
 
-and then we "undo" the renaming, by keeping track which letter corresponds to which. In this case w&rarr;b, x&rarr;z, y&rarr;b, z&rarr;c.
+and then we "undo" the renaming, by keeping track of which letter corresponds to which. In this case w&rarr;b, x&rarr;z, y&rarr;b, z&rarr;c.
 
 ![Glushkovs_construction_BABC](/assets/Glushkovs_construction_BABC.png)
 
 This way you can compile all regular expressions (not only local ones). Now with this knowledge you can move on and read about analogical [constructions for Mealy machines](/compiling_mealy_regexes.html)
+
+### Procedural compilation
+
+This approach to compiling automata is the most flexible one but also the slowest and it produces largest automata in size. The idea is to treat all operations in regular expressions as functions. Instead of writing `a(c|b)*` you would write `concat(char(a),kleene(union(char(c),char(b))))` where `char` is a function taking a character and returning automaton accepting that single character, `union` and `concat` take two automata and returns a new automaton, `kleene` takes one automaton and returns a new one. The notation `a(c|b)*` becomes merely a syntactic shugar. The great advantage of this apprach is that you can add functions such as `reverse`, `complement`, `intersection`, `exclusive_union` and anything else that comes to your mind. One might even add `minimise` function to combat the problem of producing too large automata. I won't explain how exactly `minimise` would work, because it's a good topic for another article, but I will give you general idea of how some other functions might work. The `char` function is quite easy to implement and it works the same as for Thompson's construction. Concatenation can also be achieved in a similar way as in Thompson's construction, but since we don't need to always keep track of only one initial and one accepting state, we don't need to use so many &epsilon; transitions. Kleene closure can be implemented similarly to concatenation and you can think of it as trying to concatenate the end of automaton with its own beginning. The union could theoretically be implemented the same way as in Thompson's construction but there is alternative much more intersting approach, hence I will explain it in detail below.
+
+#### Product automata
+
+The first necessary procedure, which is the base for many others, is the product construction of automata. Let's say that you have two automata `A` and `B`. The first one has states _Q<sub>A</sub> = {a<sub>1</sub>, a<sub>2</sub>, ..., a<sub>n</sub> }_. The second one has _Q<sub>B</sub> = {b<sub>1</sub>, b<sub>2</sub>, ..., b<sub>m</sub> }_. The states of product automaton `C` are _Q<sub>C</sub> = { c<sub>1</sub>, c<sub>2</sub>, ..., c<sub>nm</sub> }_ such that _c<sub>1</sub>=(a<sub>1</sub>,b<sub>1</sub>)_, _c<sub>2</sub>=(a<sub>2</sub>,b<sub>1</sub>)_ and so on. We can arrange it in a table for better visualization:
+
+<table>
+<thead>
+  <tr>
+    <th></th>
+    <th>a<sub>1</sub></th>
+    <th>a<sub>2</sub></th>
+    <th>...</th>
+    <th>a<sub>n</sub></th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>b<sub>1</sub></td>
+    <td>c<sub>1</sub></td>
+    <td>c<sub>2</sub></td>
+    <td>...</td>
+    <td>c<sub>n</sub></td>
+  </tr>
+  <tr>
+    <td>b<sub>2</sub></td>
+    <td>c<sub>n+1</sub></td>
+    <td>c<sub>n+2</sub></td>
+    <td>...</td>
+    <td>c<sub>2n</sub></td>
+  </tr>
+  <tr>
+    <td>...</td>
+    <td>...</td>
+    <td>...</td>
+    <td>...</td>
+    <td>...</td>
+  </tr>
+  <tr>
+    <td>b<sub>m</sub></td>
+    <td>c<sub>(m-1)n+1</sub></td>
+    <td>c<sub>(m-1)n+2</sub></td>
+    <td>...</td>
+    <td>c<sub>mn</sub></td>
+  </tr>
+</tbody>
+</table>
+
+Notice that _Q<sub>C</sub>=Q<sub>A</sub>&times;Q<sub>B</sub>_, hence we write _A&times;B_ to denote such product of automata _A_ and _B_. In this case _C=A&times;B_.  
+If _a<sub>i</sub>_ is the initial state of _A_ and _b<sub>j</sub>_ is the initial state of _B_, then _c<sub>(j-1)n+i</sub> = (a<sub>i</sub>,b<sub>j</sub>)_ is the initial state of _C_. 
+
+Now, if we want to produce union _C=A&cup;B_ we need to first compute _C=A&times;B_ and then set accepting states accordingly. For all those states _c<sub>(y-1)n+x</sub> = (a<sub>x</sub>,b<sub>y</sub>)_ in which either _a<sub>x</sub>_ or _b<sub>y</sub>_ are accepting, the state _c<sub>(y-1)n+x</sub>_ should be accepting too. It's very easy to tweak it a bit to obtain intersection or exclusive union.
+
+
+The last thing I should point out is that, in fact, Thompson's construction is a very special case of procedural compilation. The approach of procedural compilation is therefore a certain generalisation. 
+
+
+
+
+
+
 
 

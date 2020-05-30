@@ -6,8 +6,11 @@ categories: compilers
 permalink: /compiler_in_c.html
 ---
 
-### Making compilers is easy
+**Contents**
+* TOC
+{:toc}
 
+### Making compilers is easy
 People often think of compiler design as sort of black magic. Some arcane craft known by very few. In reality it's far simpler than that.  It's all about languages and as we all know, languages are the essence of computer science. A compiler is nothing more than just translator for machines. You can make a compiler that converts Turing machines to lambda calculus, or string rewrite systems to recursive functions. In one of the [previous posts](/compiling_regexes.html) I already explained how to translate regular expressions to finite state machines. That was in essence a compiler. 
 
 ### Toy language

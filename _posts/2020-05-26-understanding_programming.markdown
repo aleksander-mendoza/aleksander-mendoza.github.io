@@ -5,7 +5,9 @@ date:   2020-05-26 01:07:00 +0200
 categories: automata
 permalink: /understanding_programming.html
 ---
-
+**Contents**
+* TOC
+{:toc}
 ### What is it any why should you care
 
 You know how there are endless discussions about which programming language is better or which snippet of code looks more "elegant". People write entire books about design patterns and your tech lead probably constantly makes negative reviews of your code telling you that you use them wrong. In the eyes of a computer scientist all this is nonsense and here I will try to show you how to think about code like a mathematician. This will really help you a lot in the long run.
