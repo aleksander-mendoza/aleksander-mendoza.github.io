@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Automata with output (intuition by examples)"
+title:  "Automata with output (intuition with examples)"
 date:   2020-05-24 01:06:00 +0200
 categories: automata
 permalink: /transducers_intuitively.html
@@ -155,20 +155,60 @@ The function _M<sub>3</sub> : &Sigma;* &rarr; &Sigma;*_ is no longer a an actual
 
 Such functions with some spots missing are called <ins>partial functions</ins> and here we will denote them with &#8640; . Hence we can write _M<sub>3</sub> : &Sigma;* &#8640; &Sigma;*_ and in this example the behaviour can be illustrated with the examples _M<sub>3</sub>(&epsilon;)=&empty;_, _M<sub>3</sub>(1)=&empty;_, _M<sub>3</sub>(11)=01_, _M<sub>3</sub>(111)=011_,  _M<sub>3</sub>(1110)=&empty;. The symbol of empty set &empty; denotes "hole" in function.
 
+
+The computation with such machines now looks like this:
+
+<table>
+<thead>
+  <tr>
+    <th>state</th>
+    <th>input</th>
+    <th>output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>&epsilon;</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub></td>
+    <td>1</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>11</td>
+    <td>01</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>111</td>
+    <td>011</td>
+  </tr>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>1110</td>
+    <td>&empty;</td>
+  </tr>
+</tbody>
+</table>
+
 The exact same thing could be done analogically for Moore machines.
 
 ### Mealy and Moore machines with string output
 
 Notice how the length of input and output string are equal in case of 
-_M<sub>2</sub> : &Sigma;* &rarr; &Sigma;*_ and _M<sub>3</sub> : &Sigma;* &#8640; &Sigma;*_. This seems to be a very limiting. There are lots of functions that could never be computed with Mealy automata. For example, imagine that you want to use regular expression to replace all occurences of "c" with "cpp". This cannot be done with the previous models. Let's extend the machines once again and allow them to output entire strings. The input on all edges must still remain as single symbol though. Here is an example of Mealy machine _M<sub>3</sub>_ that performs the task of subtitution:
+_M<sub>2</sub> : &Sigma;* &rarr; &Sigma;*_ and _M<sub>3</sub> : &Sigma;* &#8640; &Sigma;*_. This seems to be a very limiting. There are lots of functions that could never be computed with Mealy automata. For example, imagine that you want to use regular expression to replace all occurences of "c" with "cpp". This cannot be done with the previous models. Let's extend the machines once again and allow them to output entire strings. The input on all edges must still remain as single symbol though. Here is an example of Mealy machine _M<sub>4</sub>_ that performs the task of subtitution:
 
 ![mealy_c_for_cpp.png](/assets/mealy_c_for_cpp.png)
 
-You can now use it and obtain _M<sub>3</sub>("main.c")="main.cpp"_. The problem with this mautomaton is that it will replace "c" everywhere, not only at the end of string. Try to build a better automaton that would change file extensions. For example it should turn "main.c" into "main.cpp", "ccc.c" to "ccc.cpp", "Main.java" to "Main.java", "clojure.clj" with "clojure.clj" and so on.
+You can now use it and obtain _M<sub>4</sub>("main.c")="main.cpp"_. The problem with this mautomaton is that it will replace "c" everywhere. It would be a lot more useful if we could replace "c" only if it is at the end of the string. Try to build a better automaton that would change file extensions. For example it should turn "main.c" into "main.cpp", "ccc.c" to "ccc.cpp", "Main.java" to "Main.java", "clojure.clj" to "clojure.clj" and so on.
 
 Read further only if you want to see the spoiler to this task.
 
-Thanks to the ability of returning output of any length from each edge (or state in case of Moore machines). The expressive power got radically greater. However, there is a certain important property that all the automata have in common. Consider _M<sub>0-3</sub>_ to be some Mealy machine. It might be augmented with accepting states like. It might even produce strings from transition output. Notice that no matter which model of Mealy machine you choose, they all start their computation in some initial state and then they can take only one transition for each character in input (they are all deterministic). For example something like this is __not__ allowed:
+Thanks to the ability of returning output of any length from each edge (or state in case of Moore machines), the expressive power got radically greater. However, there is a certain important property that all the automata have in common. Consider any of the previous Mealy machines. It might be augmented with accepting states like _M<sub>3</sub>_. It might even produce strings on transition output like _M<sub>4</sub>_. Notice that no matter which model of Mealy machine you choose, they all start their computation in some initial state and then they can take only one transition for each character in input (they are all deterministic). For example something like this is __not__ allowed:
 
  ![mealy_nondet.png](/assets/mealy_nondet.png)
  
@@ -476,7 +516,105 @@ You might ask yourself, why do we even bother with weighted Mealy machines, if t
 1. weighted Mealy machines often usually smaller than their corresponding non-weighted counterparts. It can be proved that there exist weighted Mealy machines that are exponentially smaller than their equivalent functional Mealy machines.
 2. it's a good introduction to probabilistic Mealy machines
 
-### Probabilistic automata 
+### Hybrid of Mealy-Moore automata
+
+Consider an automaton that is a mix of both Mealy and Moore models. It has outputs on all edges just like Mealy machine **and** is also has Moore-style output on accepting states. 
+
+![mealy_and_moore](/assets/mealy_and_moore.png)
+
+Most of the time this machine works just like Mealy machines. The only difference is that whenever it reaches the accepting state, it should append its output right before accepting.  
+
+<table>
+<thead>
+  <tr>
+    <th>state</th>
+    <th>input</th>
+    <th>output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>&epsilon;</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub></td>
+    <td>1</td>
+    <td>&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>11</td>
+    <td>010</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>111</td>
+    <td>0110</td>
+  </tr>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>1110</td>
+    <td>&empty;</td>
+  </tr>
+</tbody>
+</table>
+
+
+This in fact is equivalent to using &epsilon;-transitions as follows:
+
+![mealy_and_moore_as_epsilon](/assets/mealy_and_moore_as_epsilon.png)
+
+The truly interesting aspect of such hybrid machines becomes visible when we also allow for entire strings on transition outputs. Then the model becomes equivalent in power so functional machines, without requiring use of any &epsilon;-transitions! There is a procedure for converting any functional (nondeterministic with &epsilon;-transitions but without &epsilon;-cycles) Mealy machine to hybrid Mealy-Moore machine. I will explain it with the example:
+
+![mealy_func_to_mealy_moore_1](/assets/mealy_func_to_mealy_moore_1.png)
+
+Before starting the procedure, let's first make sure that this automaton is indeed functional. Here is its powerset graph (of reachable combinations):
+
+
+![mealy_func_to_mealy_moore_powerset](/assets/mealy_func_to_mealy_moore_powerset.png)
+
+Each state of this graph represents several states of the original automaton. For instance the state tagged `0,1,4` corresponds to set of states _q<sub>0</sub>_, _q<sub>1</sub>_ and _q<sub>4</sub>_. There is also blank state which represents empty set. Each transition shows how the nondeterminism is affected by subsequent input. If you analyse this graph you will see that there is no conflict of outputs at any point. For instance  initially the automaton starts in _q<sub>0</sub>_, which immediately transitions to _q<sub>1</sub>_ and _q<sub>4</sub>_ over &epsilon;. Then if the next input is _0_, the state _q<sub>0</sub>_ will be "lost" as it doesn't have any transition for input _0_. The state _q<sub>1</sub>_ will transition to _q<sub>2</sub>_ and _q<sub>3</sub>_. The state _q<sub>4</sub>_ doesn't have any outgoing transitions and will get "lost" too. This yields transition `0 -> ` + `1 -> 2,3` + `4 -> ` = `0,1,4 -> 2,3`. There is no conflict here because none of the states _q<sub>0</sub>_, _q<sub>1</sub>_, _q<sub>4</sub>_ transition to the same next state simultaneously. There would be a conflict, if for example there was `0 -> 2` + `1 -> 2,3` + `4 -> ` = `0,1,4 -> 2,2,3`.
+
+Alright, so now that we know the machine is functional, we can begin converting it to Mealy-Moore hybrid.
+In the first stage of convertion procedure, we will try to find all &epsilon;-transitions <ins> that do not come out of initial state </ins> and remove them. Here you can see one such transition between _q<sub>1</sub>_ and _q<sub>4</sub>_. It can be eliminated as follows:
+
+![mealy_func_to_mealy_moore_3](/assets/mealy_func_to_mealy_moore_3.png)
+
+We essentially copied all the edges coming into _q<sub>1</sub>_ and connected them to  _q<sub>4</sub>_, while also appending to them the output returned from the &epsilon;-transition. You can see that while doing so, we had to introduce a new &epsilon;-transition from _q<sub>0</sub>_ to _q<sub>4</sub>_. Thanks to the guarantee that there are no &epsilon;-cycles, we can be sure that we won't be introducing new &epsilon;-transition infinitely forever as we remove the previous ones. (Indeed you can see that graphs without &epsilon;-cycles can only contain  &epsilon;-trees, therefore we will eventually reach the root of the tree, as we progress with removing &epsilon;-transitions).
+
+Now we reached a point when all the remaining &epsilon;-transitions are coming out of initial state. We cannot remove them the same way as before. We need to "split" the initial state into two new states as follows:
+
+![mealy_func_to_mealy_moore_4](/assets/mealy_func_to_mealy_moore_4.png)
+
+The original initial state  _q<sub>0</sub>_ should not have any incoming transitions anymore. Instead the new state  _q<sub>5</sub>_ will now try to mimic the missing functionality of  _q<sub>0</sub>_. (Note: You can see there is some analogy in this approach to expanding Kleene closure from _a\*_ to _(a+&epsilon;)a*_). 
+Now let's remove transition between _q<sub>0</sub>_ and _q<sub>1</sub>_.
+
+![mealy_func_to_mealy_moore_5](/assets/mealy_func_to_mealy_moore_5.png)
+
+All the transitions coming out of _q<sub>1</sub>_, now have been duplicated for _q<sub>0</sub>_ too. In the next step let's remove &epsilon;-transition from _q<sub>0</sub>_ and _q<sub>4</sub>_:
+
+![mealy_func_to_mealy_moore_6](/assets/mealy_func_to_mealy_moore_6.png)
+
+This time, because _q<sub>4</sub>_ did not have any outgoing transitions, we did not need to add any new transitions to _q<sub>0</sub>_. However, the most important change was marking _q<sub>0</sub>_ as accepting and adding to it Moore-style output _101_.
+
+At this point there are no more &epsilon;-transitions  coming out of the initial state. We can safely remove all the remaining transitions left in other parts of automaton. Let's get rid of the one from _q<sub>5</sub>_ to _q<sub>4</sub>_:
+
+![mealy_func_to_mealy_moore_7](/assets/mealy_func_to_mealy_moore_7.png)
+
+And the last one from _q<sub>5</sub>_ to _q<sub>1</sub>_:
+
+![mealy_func_to_mealy_moore_8](/assets/mealy_func_to_mealy_moore_8.png)
+
+We can see that the state _q<sub>5</sub>_ was necessary only temporarily but in the final result it's a dead-end state that could be safely removed. 
+
+The final phase of the procedure is to add missing Moore output to all other accepting states:
+
+![mealy_func_to_mealy_moore_9](/assets/mealy_func_to_mealy_moore_9.png)
+
+
+### Probabilistic automata (transducers)
 
 TODO
 
