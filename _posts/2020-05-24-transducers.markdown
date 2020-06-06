@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Automata with output (intuition with examples)"
+title:  "Automata with output"
 date:   2020-05-24 01:06:00 +0200
 categories: automata
 permalink: /transducers_intuitively.html
