@@ -104,7 +104,12 @@ Of course at this moment it doesn't make any sense to compile anything. We still
 ### First minimal sample project with Flex and Bison
 
 
-Before we are able to compile anything, we first need to parse the source code of our language
+Before we are able to compile anything, we first need to parse the source code of our language. For example, here is a video of how C parser works:
+
+<p><video id="scenario-1" class="video-js vjs-default-skin vjs-big-play-centered" controls
+ preload="auto" width="640" height="480" data-setup='{}'>
+  <source src="/assets/ast_funny.mp4" type='video/mp4'>
+</video></p>
 
 
 ![ast1234](/assets/ast_1_plus_2_plus_3_plus_4.png){: style="float: left"}  
@@ -114,9 +119,6 @@ Notice that the because addition is commutataive (the order `x+y` or `y+x` makes
 picture on the left represents the following bracketing: `1+(2+(3+4))`. The result of addition would still be the same even if bracketing was `(1+2)+(3+4)`, but imagine what would happen iff instead of addition it was division `1/2/3/4`. The order of operations will make huge difference in this case.
 
 This post will not go into deeper details of formal grammars and theory behind parsing. If you want to know more I suggest you check out [this post](/parsers.html). Now let's get our hands dirty. Writing a lexer manually is very difficult and error-prone. Therefore we shall use Flex to generate the lexer code for us. Below are the contents of `syntax_scanner.l` file.
-
-
-
 
 {% highlight flex %}
 

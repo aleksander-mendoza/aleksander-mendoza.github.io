@@ -116,9 +116,17 @@ In case of automata that work with real numbers, such appraoch is the only effec
 To better formalize it, we need to use topology. Let _&tau; &sub; 2<sup>&Sigma;</sup>_ be a set of "primitive" subsets of &Sigma;. So for example, if we allow for efficient testing of symbol ranges from &Sigma;, then &tau; contains all those ranges. 
 (In particular, if _&Sigma;=\{0,1,2,3\}_ then _&tau;=\{\{\}, {0}, {1}, {2}, {3}, {0,1}, {1,2}, {2,3}, {0,1,2}, {1,2,3}, {0,1,2,3}\}_. Notice that sets that are not ranges, are not in &tau;. For instance _{0,3} &notin; &tau;_.) 
 
-Now, we define finite state automata to be directed multigraphs such that all edges are labeled with _primitive_ subsets. Deterministic automata are a special case of finite state automata, such that all edges coming out of a given vertex as mutually disjoint and their union equals &Sigma; (in other words, the edges induce some partition of &Sigma;). Moreover, some vertices are accepting and there is one special vertex which is the initial one. A string is accepted if and only if there is a path that starts in initila state, ends in accepting state and consecutive symbols in that string are members of "primitive" subsets on lebels of consecutive edges in the path. Notice that edge which is labeled with &empty; is useless, because no symbol is a member of it (hence, you should not think that &empty; works like &epsilon;-transition. There are no &epsilon;-transition in this definition).
+Now, we define finite state automata to be directed multigraphs such that all edges are labeled with "primitive" subsets. Deterministic automata are a special case of finite state automata, such that all edges coming out of a given vertex as mutually disjoint and their union equals &Sigma; (in other words, the edges induce some partition of &Sigma;). Moreover, some vertices are accepting and there is one special vertex which is the initial one. A string is accepted if and only if there is a path that starts in initila state, ends in accepting state and consecutive symbols in that string are members of "primitive" subsets on lebels of consecutive edges in the path. Notice that edge which is labeled with &empty; is useless, because no symbol is a member of it (hence, you should not think that &empty; works like &epsilon;-transition. There are no &epsilon;-transition in this definition).
 
-This definition opens a door to many new possibilities. For instance, one could now measure size of automaton in the number of edges and investigate, how the topology &tau; on &Sigma; influences sizes of automata. This is also a much better definition for working with automata over computable sets of real number.
+As an example, consider _&Sigma;=\{0,1,2,3\}_ with topology of ranges _&tau;=\{\{\}, {0}, {1}, {2}, {3}, {0,1}, {1,2}, {2,3}, {0,1,2}, {1,2,3}, {0,1,2,3}\}_. This means that the following is allowed:
+
+![fsa_transition_0_23](/assets/fsa_transition_0_23.png)
+
+But this is not allowed despite giving equivalent resutls: 
+
+![fsa_transition_023](/assets/fsa_transition_023.png)
+
+This definition opens door to many new possibilities. For instance, one could now measure size of automaton in the number of edges and investigate, how the topology &tau; on &Sigma; influences sizes of automata. This is also a much better definition for working with automata over computable sets of real number.
 
 To all those readers who already know topology: primitive subsets are indeed open sets.
 
