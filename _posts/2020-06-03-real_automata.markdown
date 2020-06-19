@@ -128,7 +128,7 @@ But this is not allowed despite giving equivalent resutls:
 
 This definition opens door to many new possibilities. For instance, one could now measure size of automaton in the number of edges and investigate, how the topology &tau; on &Sigma; influences sizes of automata. This is also a much better definition for working with automata over computable sets of real number.
 
-To all those readers who already know topology: primitive subsets are indeed open sets.
+To all those readers who already know topology: The tuple (&Sigma;,&tau;) may or may not be a topological space. If (&Sigma;,&tau;) is a topological space then primitive subsets are open sets. It is always possible to extend &tau; to be closed under union and intersection but such closure could lose certain computational properties that might be of our interest. The binary search procedure described below is an example of such scenario.
 
 #### Binary search transitions
 
