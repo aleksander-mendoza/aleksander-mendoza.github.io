@@ -673,10 +673,13 @@ char*** concatProd(char ** x,char ** y,int size){
     char *** n = malloc(sizeof(char**)*size);
     for(int i = 0;i<size;i++){
         n[i] = malloc(sizeof(char*)*size);
+    }
+    for(int i = 0;i<size;i++){
         for(int j = 0;j<size;j++){
             n[i][j] = concat(x[i],y[j]);
         }
     }
+    return n;
 }
 {% endhighlight %}
 
@@ -811,23 +814,321 @@ struct T f(struct AST * root, int sigmaSize){
         x.l = empty2D(sigmaSize);
         x.b = empty(sigmaSize);
         x.e = empty(sigmaSize);
-        x.a = NULL;
+        x.a = epsilon;
         return x;
     }
     }
 }
 {% endhighlight %}
 
+#### Test of progress so far
 
-
-### Data structure for automata
-We should use hybrid Mealy-Moore machine. Check out the section on more [formal perspective](/transducers_intuitively.html#formal-perspective) for this model. In C we could implement it like this
+At this point we might test our code by adding a simple debug function
 
 {% highlight C %}
-struct M{
-    int i; // initial state
-    char* F[]; // Moore-style output
+void printT(struct T * t, int size){
     
+    for(int i=0;i<size;i++){
+        printf("l:");
+        for(int j=0;j<size;j++){
+            printf("'%s' ",t->l[i][j]);
+        }
+        printf("\n");
+    }
+    printf("b:");
+    for(int i=0;i<size;i++){
+        printf("'%s' ",t->b[i]);
+    }
+    printf("\n");
+    printf("e:");
+    for(int i=0;i<size;i++){
+        printf("'%s' ",t->e[i]);
+    }
+    printf("\n");
+    printf("a:'%s'\n",t->a);
 }
 {% endhighlight %}
 
+We could then add it to our previous `inductivePrint` function.
+
+{% highlight C %}
+void inductivePrint(struct AST * root,int size,int indentation){
+    struct T t = f(root,size);
+    printT(&t,size);
+    printSpaces(indentation);
+    switch(root->type){
+    case 0:
+    ...
+{% endhighlight %}
+
+Add it to Bison code as follows
+
+{% highlight C %}
+Union { 
+        int sigmaSize = count($1);
+        char * stack = malloc(sizeof(char)* sigmaSize);
+        localize($1,0,stack);
+        inductivePrint($1,sigmaSize,0);
+    }
+{% endhighlight %}
+
+You should be able to see the following output:
+
+{% highlight Bash %}
+$ echo '"re":"ter"' | ./run.sh 
+
+l:'(null)' '' 
+l:'(null)' '(null)' 
+b:'' '(null)' 
+e:'(null)' 'ter' 
+a:'(null)'
+:ter
+l:'(null)' '' 
+l:'(null)' '(null)' 
+b:'' '(null)' 
+e:'(null)' '' 
+a:'(null)'
+    .
+l:'(null)' '(null)' 
+l:'(null)' '(null)' 
+b:'' '(null)' 
+e:'' '(null)' 
+a:'(null)'
+        .
+l:'(null)' '(null)' 
+l:'(null)' '(null)' 
+b:'(null)' '(null)' 
+e:'(null)' '(null)' 
+a:''
+            epsilon
+l:'(null)' '(null)' 
+l:'(null)' '(null)' 
+b:'' '(null)' 
+e:'' '(null)' 
+a:'(null)'
+             0
+l:'(null)' '(null)' 
+l:'(null)' '(null)' 
+b:'(null)' '' 
+e:'(null)' '' 
+a:'(null)'
+         1
+{% endhighlight %}
+
+### Data structure for automata
+
+We should use hybrid Mealy-Moore machine. Check out the section on more [formal perspective](/transducers_intuitively.html#formal-perspective) for this model. In C we could implement it like this
+
+{% highlight C %}
+struct Transition{
+    char input;
+    int targetState;
+    char* output;
+};
+struct Transitions{
+    struct Transition * ts;
+    int len;
+};
+/**The main data structure for entire automaton*/
+struct M{ 
+    int i; // initial state
+    int stateCount;
+    struct Transitions * delta; // transition functiom
+    char** F; // accepting states and Moore output
+};
+{% endhighlight %}
+
+We can take `T` produced by `f` function and convert it to `M` as follows.
+
+{% highlight C %}
+struct M TtoM(struct T * t,char * stack, int sigmaSize){
+    struct M m;
+    m.stateCount = sigmaSize+1;//there is one state for every symbols in 
+    //Sigma plus one extra initial state 
+    m.i = sigmaSize;
+    m.F = malloc(sizeof(char*)*m.stateCount);
+    for(int i=0;i<sigmaSize;i++)m.F[i] = t->e[i];
+    m.F[sigmaSize] = t->a;
+    m.delta = malloc(sizeof(struct Transitions)*m.stateCount);
+    // delta stores an array of transitions for each state
+    for(int i=0;i<sigmaSize;i++){
+        int transitionCount = 0;//first find out how many outgoing
+        //transitions originate in state i
+        for(int j=0;j<sigmaSize;j++)if(t->l[i][j])transitionCount++;
+        //then allocate array of transitions
+        m.delta[i].len = transitionCount;
+        struct Transition * tr = m.delta[i].ts = malloc(sizeof(struct Transition)*transitionCount);
+        //then collect all the transitions 
+        for(int j=0,k=0;j<sigmaSize;j++){
+            char* output = t->l[i][j];
+            if(output){
+                tr[k].targetState = j; //j is the target state of transition
+                tr[k].input = stack[j]; // stack[j] tells us the input label of transition
+                tr[k].output = output;
+                k++;
+            }
+        }
+    }
+
+    //now it's time to connect initial state with the rest of states
+    int initialTransitionCount = 0;
+
+    for(int j=0;j<sigmaSize;j++)if(t->b[j])initialTransitionCount++;
+    
+    m.delta[sigmaSize].len = initialTransitionCount;
+    struct Transition * initialTr = m.delta[sigmaSize].ts = 
+        malloc(sizeof(struct Transition)*initialTransitionCount);
+
+    for(int j=0,k=0;j<sigmaSize;j++){
+        char* output = t->b[j];
+        if(output){
+            initialTr[k].targetState = j; 
+            initialTr[k].input = stack[j];
+            initialTr[k].output = output;
+            k++;
+        }
+    }
+    //lastly you could sort all transitions by input in increasing order,
+    //which would later allow you to implement binary search. I want to
+    //keep things simple so I won't do it here.
+    return m;
+}
+{% endhighlight %}
+
+
+Let's extend our Bison function and print the produced automaton
+
+{% highlight Bison %}
+Union { 
+        int sigmaSize = count($1);
+        char * stack = malloc(sizeof(char)* sigmaSize);
+        localize($1,0,stack);
+        struct T t = f($1,sigmaSize);
+        struct M m = TtoM(&t,stack,sigmaSize);
+        printf("Initial state=%d\n",m.i);
+        printf("State count=%d\n",m.stateCount);
+        printf("Moore output=");
+        for(int i=0;i<m.stateCount;i++){
+            printf(" '%s'",m.F[i]);
+        }
+        printf("\n");
+        printf("Transitions:\n");
+        for(int i=0;i<m.stateCount;i++){
+            for(int j=0;j<m.delta[i].len;j++){
+                printf("From %d to %d over '%c' printing \"%s\"\n",i,m.delta[i].ts[j].targetState,m.delta[i].ts[j].input,m.delta[i].ts[j].output);
+            }
+        }
+    }
+{% endhighlight %}
+
+You should now see the following output
+
+{% highlight Bash %}
+echo '"rete":"ter"+"re":"rtre"' | ./run.sh 
+
+Initial state=6
+State count=7
+Moore output= '(null)' '(null)' '(null)' 'ter' '(null)' 'rtre' '(null)'
+Transitions:
+From 0 to 1 over 'e' printing ""
+From 1 to 2 over 't' printing ""
+From 2 to 3 over 'e' printing ""
+From 4 to 5 over 'e' printing ""
+From 6 to 0 over 'r' printing ""
+From 6 to 4 over 'r' printing ""
+{% endhighlight %}
+
+### Running the automata
+
+For execution of automata, we should implement backtracking mechanism
+
+{% highlight C %}
+char * run(struct M * m, char * input){
+    int len = strlen(input);
+    //we will use backtracking mechanism for
+    //evaluation of all nondeterministic
+    //superpositions of automaton
+    int backtrack[len+1][m->stateCount];
+    for(int state=0;state<m->stateCount;state++)
+        for(int step=0;step<len+1;step++)
+            backtrack[step][state]=-1;
+    backtrack[0][m->i]=m->i;
+    //first we need to propagate input forwards for each symbol 
+    for(int step=1;step<=len;step++){
+        char inputSymbol = input[step-1];
+        for(int state=0;state<m->stateCount;state++){
+            if(backtrack[step-1][state]>-1){
+                for(int tran=0;tran<m->delta[state].len;tran++){
+                    // remember that there might me multiple nondeterministic
+                    // transitions for given state and inputSymbol
+                    if(m->delta[state].ts[tran].input==inputSymbol){
+                        int targetState = m->delta[state].ts[tran].targetState;
+                        if(backtrack[step][targetState]>-1){
+                            printf("Nondeterminism at step %d in state %d",step,targetState);
+                            exit(1);
+                        }
+                        backtrack[step][targetState] = state; // this will allow us to
+                        //backtrack later and determine printed output
+                    }
+                }
+            }
+        }
+    }
+    //now we need to check if any of the accepting states is reached
+    int acceptedState = -1;
+    for(int state=0;state<m->stateCount;state++){
+        if(backtrack[len][state]>-1){
+            if(acceptedState==-1){
+                acceptedState = state;
+            }else{
+                printf("Nondeterminism at final step in states %d and %d",acceptedState,state);
+                exit(1);
+            }
+        }
+    }
+    if(acceptedState==-1){
+        //no state accepted, so we return NULL (empty set) as output
+        return NULL;
+    }
+    //now we need to backtrack and collect output printed along each transition
+    int sizeOfOutput = strlen(m->F[acceptedState]);
+    int backtrackedState = acceptedState;
+    for(int step = len;step>0;step--){
+        int sourceState = backtrack[step][backtrackedState];
+        sizeOfOutput += strlen(outputFor(m,sourceState,backtrackedState,input[step-1]));
+        backtrackedState = sourceState;
+    }
+    char * output = malloc(sizeof(char)*sizeOfOutput+1);
+    output[0]='\0';
+    strcat(output,m->F[acceptedState]);
+    backtrackedState = acceptedState;
+    for(int step = len;step>0;step--){
+        int sourceState = backtrack[step][backtrackedState];
+        strcat(output,outputFor(m,sourceState,backtrackedState,input[step-1]));
+        backtrackedState = sourceState;
+    }
+    return output;
+}
+{% endhighlight %}
+
+
+We could then extend Bison function to
+
+{% highlight Bison %}
+Union { 
+        int sigmaSize = count($1);
+        char * stack = malloc(sizeof(char)* sigmaSize);
+        localize($1,0,stack);
+        struct T t = f($1,sigmaSize);
+        struct M m = TtoM(&t,stack,sigmaSize);
+        printf("Output for 'foo' is '%s'\n",run(&m,"foo"));
+    }
+{% endhighlight %}
+
+You should then see the following output
+
+{% highlight Bash %}
+echo '"foo":"ter"' | ./run.sh 
+
+Output for 'foo' is 'ter'
+{% endhighlight %}
