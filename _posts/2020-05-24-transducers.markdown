@@ -619,6 +619,67 @@ The final phase of the procedure is to add missing Moore output to all other acc
 
 ![mealy_func_to_mealy_moore_9](/assets/mealy_func_to_mealy_moore_9.png)
 
+#### Formal perspective
+
+The mathematical definition of Mealy-Moore hybrid machine is a tuple (Q,i,&Sigma;,&Gamma;,&delta;,F) where
+
+> Q is the set of states  
+> i&isin;Q is the initial state  
+> &Sigma; is the input alphabet  
+> &Gamma; is the output alphabet  
+> &delta;:Q&times;&Sigma;&rarr;2<sup>Q&times;&Gamma;\*</sup> is the (nondeterministic) transition function  
+> F:Q&#8640;&Gamma;\* is accepting function which returns Moore-style output
+
+Earlier I gave examples where some states were final and they printed Moore-style output before accepting. However, a bit more mathematical approach would be to view all states as final, except some of them print &empty; as Moore-style output. &empty; annihilates all previous output.  For instance:
+
+- when you concatenate strings _a_ and _b_ you obtain string _a&middot;b=ab_, 
+- when you concatenate singletone sets of strings _{a}_ and _{b}_ you obtain a new singleton set _{a&middot;b=ab}_, 
+- when you concatenate sets of strings _{a,bf}_ and _{ce,&epsilon;}_ you obtain set _{a&middot;&epsilon;=a,bf&middot;&epsilon;=bf,ac&middot;e=ace,bf&middot;ce=bfce}_
+- but when you concatenate _{a,b,c}_ with empty set _{}_ you obtain the same empty set as a result.
+
+Hence the example at the beginning of this section, should in fact be viewed as:
+
+![mealy_and_moore](/assets/mealy_and_moore_empty_set.png)
+
+<table>
+<thead>
+  <tr>
+    <th>state</th>
+    <th>input</th>
+    <th>output</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>&epsilon;</td>
+    <td>&epsilon;&middot;&empty;=&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>1</sub></td>
+    <td>1</td>
+    <td>0&middot;&empty;=&empty;</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>11</td>
+    <td>01&middot;0=010</td>
+  </tr>
+  <tr>
+    <td>q<sub>2</sub></td>
+    <td>111</td>
+    <td>011&middot;0=0110</td>
+  </tr>
+  <tr>
+    <td>q<sub>0</sub></td>
+    <td>1110</td>
+    <td>0110&middot;&empty;=&empty;</td>
+  </tr>
+</tbody>
+</table>
+
+Therefore you can see that this machine always "accepts" and always "returns" output, except that sometimes that output might be a string and sometimes it might be "nothing".
+
 
 ### Probabilistic automata (transducers)
 

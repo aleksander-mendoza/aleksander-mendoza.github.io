@@ -522,7 +522,7 @@ Moreover from the the fact that _&phi;_  has been linearized and uses unique sym
 give us guarantee of E(x) and E(y) being disjoint (analogically for _B_). Since they are always disjoin and _\|A(y)\|&le;1_ and _{y}_ is singleton, we can imply that both _B(&phi;)  &sub; &Sigma;' &times; &Gamma;*_ and _E(&phi;) &sub; &Sigma;' &times; &Gamma;\*_ are actually functions _B(&phi;)  &sub; &Sigma;' &rarr; &Gamma;\*_ and _E(&phi;) &sub; &Sigma;' &rarr; &Gamma;\*_.  
 More intuitively consider the example of _&phi;=_`"a":"x" + "a":"y"`, which yields _E(&phi;)={ (a,{x,y}) }_. Such subset of _&Sigma;' &times; &Gamma;*_ is not a function _&Sigma;' &rarr; &Gamma;*_ because it returns multiple values for _a_. If we linearize &phi; as `"0":"x" + "1":"y"` then _E(&phi;)={ (0,{x}) (1,{y}) }_ becomes a function. All this will be crucial later.
 
-Finally the last function is _L_ which collects all possible substrigs of length 2. Each such substring _xy &isin; &Sigma;'&Sigma;'_ will represent a transition from _x_ to _y_. All elements of _&Sigma;'_ will later become states of automaton. We also need to keep track of output that should be printed at the transition from _x_ to _y_. The type of _L_ is therefore _L:AST &rarr; &Sigma;'&Sigma;'&times;&Gamma;\*_
+Finally the last function is _L_ which collects all possible substrigs of length 2. Each such substring _xy &isin; &Sigma;'&Sigma;'_ will represent a transition from _x_ to _y_. All elements of _&Sigma;'_ will later become states of automaton. We also need to keep track of output that should be printed at the transition from _x_ to _y_. The type of _L_ is therefore _L:AST &rarr; 2<sup>&Sigma;'&Sigma;'&times;&Gamma;\*</sup>_
 
 > L(x+y) = L(x)&cup;L(y)    
 > L(xy) = E(x)B(y) &cup; L(x) &cup; L(y)     
@@ -544,4 +544,290 @@ All symbols from _&Sigma;'_ should be treated as states of the machine. Addition
 ### C optimization of Glushkov's algorithm
 
 
-Now, that we know the theory behind Glushkov's construction, we can try to optimize it and build C version of it.
+Now, that we know the theory behind Glushkov's construction, we can try to optimize it and build C version of it. First of all, having all those separate functions _A_, _B_, _E_ and _L_ is not very efficient, because _L_ calls _B_ and _E_, which in turn call _A_ multiple times on the same input, leading to plenty of redundantly duplicated computation. We can merge all those functions together into just one function _f_ that returns all outputs of _L_, _B_, _E_, _A_ in a tuple _f:AST &rarr; 2<sup>&Sigma;'&Sigma;'&times;&Gamma;\*</sup>&times;2<sup>&Sigma;'&times;&Gamma;\*</sup>&times;2<sup>&Sigma;'&times;&Gamma;\*</sup>&times;2<sup>&Gamma;\*</sup>_. Therefore _f_ is equivalent to _f(&phi;) = (L(&phi;),B(&phi;),E(&phi;),A(&phi;))_. It can be defined inductively as:
+ 
+
+> f(x+y) = (l<sub>x</sub>&cup; l<sub>y</sub>, b<sub>x</sub>&cup; b<sub>y</sub>, e<sub>x</sub>&cup; e<sub>y</sub>, a<sub>x</sub>&cup; a<sub>y</sub>) where f(x)=(l<sub>x</sub>,b<sub>x</sub>,e<sub>x</sub>,a<sub>x</sub>) and f(y)=(l<sub>y</sub>,b<sub>y</sub>,e<sub>y</sub>,a<sub>y</sub>)   
+> f(xy) = (e<sub>x</sub>b<sub>y</sub>&cup; l<sub>x</sub>&cup; l<sub>y</sub>, b<sub>x</sub>&cup; (a<sub>x</sub> b<sub>y</sub>), (e<sub>x</sub> a<sub>y</sub>)&cup; e<sub>y</sub>, a<sub>x</sub>a<sub>y</sub>) where f(x)=(l<sub>x</sub>,b<sub>x</sub>,e<sub>x</sub>,a<sub>x</sub>) and f(y)=(l<sub>y</sub>,b<sub>y</sub>,e<sub>y</sub>,a<sub>y</sub>)    
+> f(x:y) = (l<sub>x</sub>, b<sub>x</sub>, e<sub>x</sub> {y}, a<sub>x</sub> {y})  where f(x)=(l<sub>x</sub>,b<sub>x</sub>,e<sub>x</sub>,a<sub>x</sub>)   
+> f(x*) = (e<sub>x</sub>b<sub>x</sub>&cup; l<sub>x</sub>, b<sub>x</sub> ,e<sub>x</sub>, a<sub>x</sub>\*)  where f(x)=(l<sub>x</sub>,b<sub>x</sub>,e<sub>x</sub>,a<sub>x</sub>)  
+> f(&epsilon;) = (&empty;,&empty;,&empty;,{&epsilon;})  
+> f(x &isin; &Sigma;') = (&empty;,{(x,&epsilon;)},{(x,&epsilon;)},&empty;)
+
+Now we can start to write the C code for _f_. The greatest challenge is choosing the right representation for sets of strings. I want to keep things as simple as possible, therefore I will just arrays. In one of the [previous posts](/understanding_programming.html#other-data-structures) I explained that arrays can be though of as partial functions from _&#8469;_ to some set. We also know that _&phi;_ has been linearized and uses unique symbols from _&Sigma;'_, therefore we could enumerate all those symbols and use them as indices in array _&Sigma;'&sub;&#8469;_. I also explained above why, in case of functional Mealy machines, the set _2<sup>&Sigma;'&times;&Gamma;\*</sup>_ should be in fact treated as a partial function _&Sigma;'&#8640;&Gamma;\*_. All this leads us to representing _f_ as
+_f:AST &rarr; (&Sigma;'&Sigma;'&#8640;&Gamma;\*)&times;(&Sigma;'&#8640;&Gamma;\*)&times;(&Sigma;'&#8640;&Gamma;\*)&times;2<sup>&Gamma;\*</sup>_. Since _&Sigma;'&sub;&#8469;_ we obtain partial functions _f:AST &rarr; (&#8469;&times;&#8469;&#8640;&Gamma;\*)&times;(&#8469;&#8640;&Gamma;\*)&times;(&#8469;&#8640;&Gamma;\*)&times;2<sup>&Gamma;\*</sup>_. Notice how I decided to represent  _&Sigma;'&Sigma;'_ as a tuple _&Sigma;'&times;&Sigma;'_, which then became _&#8469;&times;&#8469;_. The functions _&#8469;&#8640;&Gamma;\*_ can be represented in C as arrays of strings `char*[]`. The function _&#8469;&times;&#8469;&#8640;&Gamma;\*_ is equivalent to 2D array `char*[][]`. This brings us to defining _f:AST &rarr; `char*[][]`&times;`char*[]`&times;`char*[]`&times;2<sup>&Gamma;\*</sup>_. The last element standing on our way to pure C definition is the set _2<sup>&Gamma;\*</sup>_. We should remember that since we are working with functional Mealy machines, we have the guarantee of \|A(&phi;)\|&le;1, hence we can be sure that _2<sup>&Gamma;\*</sup>_ is either empty or a singleton set. [In this post](/understanding_programming.html#optional-types) I explained that such sets are often known as optional types and in C one can represent them with nullable pointers. For this reason, _2<sup>&Gamma;\*</sup>_ will become `char*` and we will use `NULL` to indicate empty set &empty;. This brings us to _f:AST &rarr; `char*[][]`&times;`char*[]`&times;`char*[]`&times;`char*`_. You should remember that [tuples can be represented in C using structs](/understanding_programming.html#products-unions-functions). Therefore we obtain
+
+{% highlight C %}
+struct T{
+    char*** l; // char*[][]
+    char** b; // char*[]
+    char** e; // char*[]
+    char* a;
+};
+{% endhighlight %}
+
+and `char*[][]`&times;`char*[]`&times;`char*[]`&times;`char*`=`T`, which gives us _f:AST &rarr; `T`_. Finally we reached a pure C definition of function, which becomes
+
+{% highlight C %}
+T f(AST * ast){...} // we can hope that C compiler will perform return-by-copy elision.
+{% endhighlight %}
+
+Before I give you the actual code for _f_, let's step back a little. We don't have code for linearization yet. 
+
+
+### C implementation of Glushkov's algorithm
+
+First we need to linearize the alphabet. This could be done by traversing AST and pushing all atomic letters onto stack. As a result we would obtain an array that assigns unique index to each letter.
+
+{% highlight C %}
+int localize(struct AST * root, int offset, char * stack){
+    switch(root->type){
+    case 0:
+        return localize(root->uni.rhs,
+            localize(root->uni.lhs,offset,stack),stack);
+    case 1:
+        return localize(root->concat.rhs,
+            localize(root->concat.lhs,offset,stack),stack);
+    case 2:
+        return localize(root->kleene.child,offset,stack);
+    case 3:
+        return localize(root->output.child,offset,stack);
+    case 4:
+        stack[offset] = root->letter.literal;
+        root->letter.literal = (char)offset;
+        return offset+1;
+    case 5:
+        return offset;
+    }
+}
+{% endhighlight %}
+
+As we push each letter onto stack `stack[offset] = root->letter.literal` we simultaneously swap it with its index `oot->letter.literal = (char)offset`. This way the AST will now contain unique letters. There is only one problem. We don't know ahead of time how large `char * stack` to allocate. We should first count all occurences of atomic letters (ignoring &epsilon;).
+
+{% highlight C %}
+int count(struct AST * root){
+    switch(root->type){
+    case 0:
+        return count(root->uni.lhs)+count(root->uni.rhs);
+    case 1:
+        return count(root->concat.lhs)+count(root->concat.rhs);
+    case 2:
+        return count(root->kleene.child);
+    case 3:
+        return count(root->output.child);
+    case 4:
+        return 1;
+    case 5:
+        return 0;
+    }
+}
+{% endhighlight %}
+
+Notice that when performing linearization, we leave &epsilon; as is. Our version of glushkov's algorithm, makes extensive use of &epsilon;'s and we should not lose them! They won't be included as states in produced automaton anyway (in fact, the resulting automaton will be &epsilon;-free on input side).  
+
+Having all this, we can move on and implement several utility functions vital for constructing _f_. As I said before, we gave special meaning concatenation _E(x)B(y)_ in
+
+> L(xy) = E(x)B(y) &cup; L(x) &cup; L(y)  
+
+or to _E(x) A(y)_ in
+
+> E(xy) = ( E(x) A(y) ) &cup; E(y)  
+
+Now we need to implement that special meaning in C. First of all, there is the singleton set concatenation:
+
+{% highlight C %}
+char * concat(char * x,char * y){
+    if(x==NULL || y==NULL)return NULL;
+    char * n = malloc(sizeof(char)*(strlen(x)+strlen(y)+1));
+    strcpy(n,x);
+    strcat(n,y);
+    return n;
+}
+{% endhighlight %} 
+ 
+Because `char * x` and `char * y` are pointers, they might be `NULL`, which represents set &empty;. If they are not null then they represent singleton set containing only one string. Having this function, we can now implement concatenation like in _E(x) A(y)_.
+
+{% highlight C %}
+/**Concatenate arbitrary set with signleton set*/
+char** setConcatStr(char ** x,int size,char * y){
+    char ** n = malloc(sizeof(char*)*size);
+    for(int i = 0;i<size;i++){
+        n[i] = concat(x[i],y);
+    }
+    return n;
+}
+/**Concatenate signleton set with arbitrary set*/
+char** strConcatSet(char * x,int size,char ** y){
+    char ** n = malloc(sizeof(char*)*size);
+    for(int i = 0;i<size;i++){
+        n[i] = concat(x,y[i]);
+    }
+    return n;
+}
+{% endhighlight %}
+
+Next we can implement concatenations of two arbitrarily-sized sets:
+
+{% highlight C %}
+char*** concatProd(char ** x,char ** y,int size){
+    char *** n = malloc(sizeof(char**)*size);
+    for(int i = 0;i<size;i++){
+        n[i] = malloc(sizeof(char*)*size);
+        for(int j = 0;j<size;j++){
+            n[i][j] = concat(x[i],y[j]);
+        }
+    }
+}
+{% endhighlight %}
+
+In our specific case, we can have at most as many values in the set as there are symbols in &Sigma;'. Hence `int size` should be equal to \|&Sigma;'\|. Remember that `x` and `y` are of type _&#8469;&#8640;&Gamma;\*_ which encodes _&Sigma;'&#8640;&Gamma;\*_.
+The type of `concatProd` can be seen as _(&Sigma;'&#8640;&Gamma;\*)&times;(&Sigma;'&#8640;&Gamma;\*) &rarr; &Sigma;'&Sigma;'&#8640;&Gamma;\*_. 
+
+Next we need several utility functions for performing union operations such as singleton union in
+
+> A(x+y) = A(x) &cup; A(y)  
+
+{% highlight C %}
+char* unionSingleton(char * lhs,char * rhs){
+    if(lhs){
+        if(rhs){
+            printf("Nondeterminism!");
+            exit(1);
+        }else{
+            return lhs;
+        }
+    }else{
+        return rhs;    
+    }
+}
+{% endhighlight %}
+
+or arbitrarily-sized union like in
+
+> E(x+y) = E(x)&cup;E(y)    
+
+{% highlight C %}
+char** unionInPlaceLhs(char ** lhs,char ** rhs,int size){
+    for(int i=0;i<size;i++){
+        lhs[i]=unionSingleton(lhs[i],rhs[i]);
+    }
+    return lhs;
+}
+{% endhighlight %}
+
+or lastly, the union of _&Sigma;'&Sigma;'&#8640;&Gamma;\*_ sets, like in
+
+> L(x+y) = L(x)&cup;L(y)    
+
+{% highlight C %}
+char*** union2DInPlaceLhs(char *** lhs,char *** rhs,int size){
+    for(int i=0;i<size;i++){
+        for(int j=0;j<size;j++){
+            lhs[i][j]=unionSingleton(lhs[i][j],rhs[i][j]);
+        }
+    }
+    return lhs;
+}
+{% endhighlight %}
+
+Finally, we need constructors for empty and singleton sets like in
+
+> f(x &isin; &Sigma;') = (&empty;,{(x,&epsilon;)},{(x,&epsilon;)},&empty;)
+
+{% highlight C %}
+char * epsilon = "";
+char ** empty(int sigmaSize){
+    char ** n = malloc(sizeof(char*)*sigmaSize);
+    for(int i=0;i<sigmaSize;i++){
+        n[i] = NULL;
+    }
+    return n;
+}
+char ** singleton(char inputSymbol,char * outputString, int sigmaSize){
+    char ** n = empty(sigmaSize);
+    n[inputSymbol] = outputString;
+    return n;
+}
+char*** empty2D(int size){
+    char *** n = malloc(sizeof(char**)*size);
+    for(int i = 0;i<size;i++){
+        n[i] = malloc(sizeof(char*)*size);
+        for(int j = 0;j<size;j++){
+            n[i][j] = NULL;
+        }
+    }
+    return n;
+}
+{% endhighlight %}
+
+With all those utilities, implementation _f_ will be much easier:
+
+{% highlight C %}
+struct T f(struct AST * root, int sigmaSize){
+    switch(root->type){
+    case 0:{
+        struct T x = f(root->uni.lhs,sigmaSize);
+        struct T y = f(root->uni.rhs,sigmaSize);
+        x.l = union2DInPlaceLhs(x.l,y.l,sigmaSize);
+        x.e = unionInPlaceLhs(x.e,y.e,sigmaSize);
+        x.b = unionInPlaceLhs(x.b,y.b,sigmaSize);
+        x.a = unionSingleton(x.a,y.a);
+        return x;
+    }
+    case 1:{
+        struct T x = f(root->concat.lhs,sigmaSize);
+        struct T y = f(root->concat.rhs,sigmaSize);
+        x.l = union2DInPlaceLhs(concatProd(x.e,y.b,sigmaSize),union2DInPlaceLhs(x.l,y.l,sigmaSize),sigmaSize);
+        x.b = unionInPlaceLhs(strConcatSet(x.a,sigmaSize,y.b),x.b,sigmaSize);
+        x.e = unionInPlaceLhs(setConcatStr(x.e,sigmaSize,y.a),y.e,sigmaSize);
+        x.a = concat(x.a,y.a);
+        return x;
+    }
+    case 2:{
+        struct T x = f(root->kleene.child,sigmaSize);
+        if(x.a && x.a[0]!='\0'){
+            printf("Nondeterminism!");
+            exit(1);
+        }
+        x.l = union2DInPlaceLhs(concatProd(x.e,x.b,sigmaSize),x.l,sigmaSize);
+        return x;
+    }
+    case 3:{
+        struct T x = f(root->output.child,sigmaSize);
+        x.e = setConcatStr(x.e,sigmaSize,root->output.outStr);
+        x.a = concat(x.a,root->output.outStr);
+        return x;
+    }
+    case 4:{
+        struct T x;
+        x.l = empty2D(sigmaSize);
+        x.b = singleton(root->letter.literal,epsilon,sigmaSize);
+        x.e = singleton(root->letter.literal,epsilon,sigmaSize);
+        x.a = NULL;
+        return x;
+    }
+    case 5:{
+        struct T x;
+        x.l = empty2D(sigmaSize);
+        x.b = empty(sigmaSize);
+        x.e = empty(sigmaSize);
+        x.a = NULL;
+        return x;
+    }
+    }
+}
+{% endhighlight %}
+
+
+
+### Data structure for automata
+We should use hybrid Mealy-Moore machine. Check out the section on more [formal perspective](/transducers_intuitively.html#formal-perspective) for this model. In C we could implement it like this
+
+{% highlight C %}
+struct M{
+    int i; // initial state
+    char* F[]; // Moore-style output
+    
+}
+{% endhighlight %}
+
