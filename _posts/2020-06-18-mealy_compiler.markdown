@@ -1104,7 +1104,10 @@ char * run(struct M * m, char * input){
     backtrackedState = acceptedState;
     for(int step = len;step>0;step--){
         int sourceState = backtrack[step][backtrackedState];
-        strcat(output,outputFor(m,sourceState,backtrackedState,input[step-1]));
+        char * stepOutput = outputFor(m,sourceState,backtrackedState,input[step-1]);
+        int stepOutputLen = strlen(stepOutput);
+        memmove(output + stepOutputLen, output, strlen(output) + 1);
+        memcpy(output,stepOutput,stepOutputLen);
         backtrackedState = sourceState;
     }
     return output;
@@ -1132,3 +1135,6 @@ echo '"foo":"ter"' | ./run.sh
 
 Output for 'foo' is 'ter'
 {% endhighlight %}
+
+
+At this point the compiler is ready. I purposely ommited many technical details to make the code simpler. I didn't free allocated memory and there is still plenty of room for extra optimisations. However, those problems are of secondary importance. The key point of this tutorial was just showing how the algorithm and compiler should work in principle.
