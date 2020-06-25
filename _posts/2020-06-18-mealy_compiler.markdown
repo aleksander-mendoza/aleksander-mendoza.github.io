@@ -1145,4 +1145,4 @@ You can see the full code here:
 
 BONUS: Here you can see the code without memory leaks: 
 [https://github.com/aleksander-mendoza/aleksander-mendoza.github.io/tree/master/code/mealy\_compiler\_web\_and\_no\_leaks](https://github.com/aleksander-mendoza/aleksander-mendoza.github.io/tree/master/code/mealy_compiler_web_and_no_leaks) 
-It also shows how to compile it with Emscripten to WebAssembly. Here you can see an [online example](/code/mealy_compiler_web_and_no_leaks/bin/web_mealy_compiler.html).
+It also shows how to compile it with Emscripten to WebAssembly. Here you can see an [online example](/code/mealy_compiler_web_and_no_leaks/web_mealy_compiler.html).

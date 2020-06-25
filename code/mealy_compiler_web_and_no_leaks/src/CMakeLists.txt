@@ -23,8 +23,12 @@ target_include_directories(web_mealy_compiler PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 set_property(TARGET web_mealy_compiler PROPERTY C_STANDARD 11)
 # This will help you with debugging errors
 set(CMAKE_VERBOSE_MAKEFILE ON)
-#This is necessary if we want emscripten to generate 
-set(CMAKE_EXECUTABLE_SUFFIX ".html")
 
+
+add_definitions("-s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\",\"allocate\",\"intArrayFromString\"]'")
+add_definitions("-s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\",\"allocate\",\"intArrayFromString\"]'")
+add_definitions("-s EXPORTED_FUNCTIONS='[\"_compile\",\"_testInt\",\"_run_global\"]'")
+set_target_properties(web_mealy_compiler PROPERTIES LINK_FLAGS "-s EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','cwrap','allocate','intArrayFromString']")
+# 
 get_target_property(OUT web_mealy_compiler LINK_LIBRARIES)
 message(STATUS ${OUT})

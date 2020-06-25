@@ -4,7 +4,7 @@
 #include "main.h"
 #include <stdlib.h>
 #include <string.h>
-
+#include <emscripten.h>
 int yylex();
 
 int yyerror(char *s);
@@ -90,6 +90,7 @@ void free2DShallow(char *** mat,int size){
     free(mat);
 }
 void freeMContents(struct M * m){
+    if(m->i==-1)return;
     free1D(m->F,m->stateCount);
     for(int i=0;i<m->stateCount;i++){
         for(int j = 0;j<m->delta[i].len;j++){
@@ -98,6 +99,7 @@ void freeMContents(struct M * m){
         free(m->delta[i].ts);
     }
     free(m->delta);
+    m->i=-1;
 }
 char* outputFor(struct M * m, int sourceState, int targetState, int inputSymbol){
     for(int tran=0;tran<m->delta[sourceState].len;tran++){
@@ -504,7 +506,7 @@ void inductivePrint(struct AST * root,int size,int indentation){
         return;
     }
 }
-struct M bisonOutput;
+struct M bisonOutput = {.i=-1,.stateCount=-1,.delta=NULL,.F=0};
 /*
 */
 %}
@@ -537,6 +539,7 @@ Start:
         char * stack = malloc(sizeof(char)* sigmaSize);
         localize($1,0,stack);
         struct T t = f($1,sigmaSize);
+        freeMContents(&bisonOutput);
         bisonOutput = TtoM(&t,stack,sigmaSize);
         freeTContents(&t,sigmaSize);
         free(stack);
@@ -580,21 +583,24 @@ Letter:
 int yyerror(char *s) {
   printf("yyerror : %s\n",s);
 }
-
+EMSCRIPTEN_KEEPALIVE
 void compile(char * string){
     yy_scan_string(string);
     yyparse();
+    printM(&bisonOutput);
 }
-
-void run_global(char * input){
-    char * out = run(&bisonOutput,input);
-    printf("Output for 'foo' is '%s'\n",out);
-    free(out);
+EMSCRIPTEN_KEEPALIVE
+int testInt(){
+    return 69420;
+}
+EMSCRIPTEN_KEEPALIVE
+char * run_global(char * input){
+    char * c = run(&bisonOutput,input);
+    printf("Out=%s\n",c);
+    return c;
 }
 
 int main(void) {
-    char string[] = "\"f\":\"ter\" \"o\":\"rt\" \"o\":\"3\"";
-    compile(string);
-    run_global("foo");
-    freeMContents(&bisonOutput);
+    
+    
 }
