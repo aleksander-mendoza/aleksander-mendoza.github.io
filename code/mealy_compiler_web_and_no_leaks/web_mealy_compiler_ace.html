@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>SyntaxHighlighter</title>
+    <style type="text/css" media="screen">
+    #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="editor">
+A = [01ret] ;
+//some comment here
+B = [abcd\]e#:;fgh]; 
+f()="re";
+f: A -> B;
+f()="010101":"ab";
+
+k()=("hello adam":"hello world")*;
+
+g: A -> B;
+g()= "01" f "re":"re";
+
+h()=("":"re#" [e-z] | " ":" " | "":"3" "abc" 1 )*;
+
+j()=(1 "":"#" 3 [a-z] )*;
+
+struct X{
+  a : A*,
+  b : B
+}
+
+
+    </div>
+    <script type="text/javascript" src="../ace/build/src/ace.js"></script>
+    <script>
+        var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        
+        editor.session.setMode("ace/mode/mealy");
+    </script>
+  </body>
+</html>
+
+
