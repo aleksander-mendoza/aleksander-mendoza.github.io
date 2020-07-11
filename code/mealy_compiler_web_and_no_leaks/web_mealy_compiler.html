@@ -16,21 +16,27 @@
 
    Type here input and press "run"</br>
    <textarea id="output" rows="8">foo</textarea></br>
-   <button onclick="compile()">compile</button>
-   <button onclick="runMealy()">run</button>
+   <button id="compPutton" onclick="compile()">compile</button><button onclick="runMealy()">run</button></br>
+   In order to compile again, refresh page. This bison parser was not made reentrant :(
+
+   
 
     <script type='text/javascript'>
       var input = document.getElementById('input');
       var output = document.getElementById('output');
+      var button = document.getElementById('compPutton');
       var Module = {};
       
       function compile(){
+        button.disabled=true;
       	console.log(input.value)
       	Module.ccall('compile',
   			'void',
   			['string'], 
   			[input.value])
+
       }
+      
       function runMealy(){
         console.log(output.value)
       	var c = Module.ccall('run_global',
