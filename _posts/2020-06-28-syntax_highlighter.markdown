@@ -113,6 +113,8 @@ Instead the format used by syntax highlighters is much closer to defining pushdo
 
 You could in theory express any grammar in this way and you _could_ convert your Bison/flex grammar to Iro, however, it doesn't mean you _should_ do it. The purpose of syntax highlighter is completely different from that of parsers found in compilers.  The `Iro` syntax is meant to be only a loosy approximation of the actualy grammar. This way, even if at some point, there is a mistake in Bison/ANTLR grammar, the Iro grammar should still be able to match the whole code and somewhat recover from the minor mistakes. Just imagine how annoying it would be if your favourite IDE worked only when the code is correct.
 
+### Detailed setup procedure
+
 Here you can see an [example of editor](/code/mealy_compiler_web_and_no_leaks/web_mealy_compiler_ace.html) made by me for the (extended version of) [Mealy machine compiler](/mealy_compiler.html). The steps that I followed were:
 
 - go to ace [GitHub page](https://github.com/ajaxorg/ace) and clone the repo `git clone https://github.com/ajaxorg/ace.git`. I will refer to the cloned directory as `$ACE_ROOT`.
