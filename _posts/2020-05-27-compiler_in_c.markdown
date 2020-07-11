@@ -15,9 +15,9 @@ People often think of compiler design as sort of black magic. Some arcane craft 
 
 ### Toy language
 
-The end goal of this tutorial is creating a very simple parser for a toy language, which can evaluate arithmetic expressions like for example
+The end goal of this tutorial is creating a very simple parser for a toy language, which can evaluate arithmetic expressions or addition and multiplication like for example
 
-    1+2/4*6+(1+3*(-4))
+    1+2/4*6+(1+3*(4))
     
     
 If you succeed at finishing this tutorial, then you will be albe to move on to a more ambitious project. 
@@ -146,8 +146,6 @@ number          [0-9]+
 "+"	    return(PLUS); //when lexer matches + symbol it will return PLUS token
 "("	    return(BEG);
 ")"	    return(END);
-"-"	    return(MINUS);
-"/"	    return(DIV);
 "*"	    return(MUL);
 
 {number}	{ 
@@ -194,9 +192,7 @@ You can include here anything you need*/
 %token BEG
 %token END
 %token PLUS
-%token MINUS
 %token MUL
-%token DIV
 
 //Here is the list of rules (non-terminals)
 //and their types. Not all rules have to be listed here.
@@ -229,13 +225,11 @@ Addition:
 	  Under $3 is the output of Addition.*/
 	 $$ = $1 + $3; 
 	}
-	| Multiplication MINUS Addition { $$ = $1 - $3; }
 	| Multiplication 
 	;
 
 Multiplication:
 	Atomic MUL Multiplication { $$ = $1 * $3; }
-	| Atomic DIV Multiplication {  $$ = $1 / $3; }
 	| Atomic
 	;
 
@@ -261,13 +255,13 @@ int main(void) {
 
 {% endhighlight %}
 
-You may now run `./compile.sh` and `echo "4+3+5-5" | ./run.sh`, which should print 
+You may now run `./compile.sh` and `echo "4+3+5*5" | ./run.sh`, which should print 
 
     $ ./compile.sh
     ... lots of logs ...
     [100%] Built target first_compiler
-    $ echo "4+3+5-5" | ./run.sh
-    Final result=7
+    $ echo "4+3+5*5" | ./run.sh
+    Final result=32
  
 
  
@@ -290,31 +284,19 @@ struct ASTPlus{
 	struct AST * rhs;//right-hand side
 };
 
-struct ASTMinus{
-	struct AST * lhs;
-	struct AST * rhs;
-};
-
 struct ASTMult{
 	struct AST * lhs;
 	struct AST * rhs;
 };
 
-struct ASTDiv{
-	struct AST * lhs;
-	struct AST * rhs;
-};
-
 struct AST{
-	/**0 for plus;1 for minus; 
-	2 for mult; 3 for div;
-	4 for atom*/
+	/**0 for plus;
+	1 for mult;
+	2 for atom*/
 	int type;
 	union{
 		struct ASTPlus plus;
-		struct ASTMinus minus;
 		struct ASTMult mult;
-		struct ASTDiv div;
 		struct ASTAtomic atom;
 	};
 };
@@ -331,11 +313,9 @@ This is our definition of abstract syntax tree. I recommend reading [this post](
 
 > 1. every number between 0 (inclusive) and &infin; (exclusive) is an arithmetic expression
 > 2. if _x_ and _y_ are arithemtic expressions, then _x+y_ is an arithemtic expression.
-> 3. if _x_ and _y_ are arithemtic expressions, then _x-y_ is an arithemtic expression.
-> 4. if _x_ and _y_ are arithemtic expressions, then _x*y_ is an arithemtic expression.
-> 5. if _x_ and _y_ are arithemtic expressions, then _x/y_ is an arithemtic expression.
+> 3. if _x_ and _y_ are arithemtic expressions, then _x*y_ is an arithemtic expression.
 
-In our code `ASTAtomic` corresponds to _1<sup>st</sup>_ case of the inductive definition. Similarly `ASTPlus` corresponds to _2<sup>nd</sup>_, `ASTMinus` to _3<sup>rd</sup>_, `ASTMult` to _4<sup>th</sup>_ and `ASTDiv` to _5<sup>th</sup>_. Therefore every arithemtic expression is either 1<sup>st</sup>,2<sup>nd</sup>,3<sup>rd</sup>,4<sup>th</sup> or 5<sup>th</sup> case. This can be represented with the struct `AST` which can either contain `ASTAtomic`, `ASTPlus`, `ASTMinus`, `ASTMult` or `ASTDiv`. 
+In our code `ASTAtomic` corresponds to _1<sup>st</sup>_ case of the inductive definition. Similarly `ASTPlus` corresponds to _2<sup>nd</sup>_ and `ASTMult` to _3<sup>th</sup>_. Therefore every arithemtic expression is either 1<sup>st</sup>,2<sup>nd</sup> or 3<sup>rd</sup> case. This can be represented with the struct `AST` which can either contain `ASTAtomic`, `ASTPlus` or `ASTMult`. 
 
 I also added a couple of `mkXXXX` functions for facility. The implementation should be stored in `main.c`:
 
@@ -351,30 +331,16 @@ struct AST * mkPlus(struct AST * lhs,struct AST * rhs){
 	node->plus = plus;
 	return node;
 }
-struct AST * mkMinus(struct AST * lhs,struct AST * rhs){
-	struct AST * node = malloc(sizeof(struct AST));
-	node->type = 1;
-	struct ASTMinus minus = {lhs,rhs};
-	node->minus = minus;
-	return node;
-}
 struct AST * mkMult(struct AST * lhs,struct AST * rhs){
 	struct AST * node = malloc(sizeof(struct AST));
-	node->type = 2;
+	node->type = 1;
 	struct ASTMult mult = {lhs,rhs};
 	node->mult = mult;
 	return node;
 }
-struct AST * mkDiv(struct AST * lhs,struct AST * rhs){
-	struct AST * node = malloc(sizeof(struct AST));
-	node->type = 3;
-	struct ASTDiv div = {lhs,rhs};
-	node->div = div;
-	return node;
-}
 struct AST * mkAtom(int literal){
 	struct AST * node = malloc(sizeof(struct AST));
-	node->type = 4;
+	node->type = 2;
 	struct ASTAtomic atom = {literal};
 	node->atom = atom;
 	return node;
@@ -401,15 +367,9 @@ int inductiveEval(struct AST * root){
         return inductiveEval(root->plus.lhs)+
            inductiveEval(root->plus.rhs);
     case 1:
-        return inductiveEval(root->minus.lhs)-
-           inductiveEval(root->minus.rhs);
-    case 2:
         return inductiveEval(root->mult.lhs)*
            inductiveEval(root->mult.rhs);
-    case 3:
-        return inductiveEval(root->div.lhs)/
-           inductiveEval(root->div.rhs);
-    case 4:
+    case 2:
         return root->atom.literal;
     }
 }
@@ -444,13 +404,11 @@ Start:
 
 Addition:
 	Multiplication PLUS Addition { $$ = mkPlus($1,$3); }
-	| Multiplication MINUS Addition { $$ = mkMinus($1,$3); }
 	| Multiplication {$$ = $1;}
 	;
 
 Multiplication:
 	Atomic MUL Multiplication { $$ = mkMult($1,$3); }
-	| Atomic DIV Multiplication {  $$ = mkDiv($1,$3); }
 	| Atomic {$$ = $1;}
 	;
 
@@ -474,8 +432,8 @@ int main(void) {
 Here we no longer evaluate the expression on the fly as we parse. Instead we first build AST and then use induction to evaluate it.
 You may now run 
 
-    $echo "4+3+5-5" | ./run.sh
-    Final result=7
+    $echo "4+3+5*5" | ./run.sh
+    Final result=32
   
 and see that everything works as it worked before. However, this time thanks to AST you can do much more than just one-time evalutation. You can add even more inductive definitions. For example here is code that prints the AST:
 
@@ -494,21 +452,11 @@ void inductivePrint(struct AST * root, int indentation){
         inductivePrint(root->plus.rhs,indentation+4);
         return;
     case 1:
-        printf("-\n");
-        inductivePrint(root->minus.lhs,indentation+4);
-        inductivePrint(root->minus.rhs,indentation+4);
-        return;
-    case 2:
         printf("*\n");
         inductivePrint(root->mult.lhs,indentation+4);
         inductivePrint(root->mult.rhs,indentation+4);
         return;
-    case 3:
-        printf("/\n");
-        inductivePrint(root->div.lhs,indentation+4);
-        inductivePrint(root->div.rhs,indentation+4);
-        return;
-    case 4:
+    case 2:
         printf("%d\n",root->atom.literal);
         return;
     }
@@ -527,12 +475,12 @@ Start:
 
 If you compile and run you should see a tree in this format:
 
-    $ echo "4+3+5-5" | ./run.sh 
+    $ echo "4+3+5\*5" | ./run.sh 
     +
         4
         +
             3
-            -
+            *
                 5
                 5
                 
@@ -547,38 +495,32 @@ I should point out that parse tree is something completely different from abstra
 
 {% highlight C %}
 
-struct Addition{
-   /*0 for positive addition with '+', 
-     1 for negative addition with '-' */
-   int type; 
+struct Addition{ 
    struct * Multiplication this;
-   struct * Addition next;
+   struct * Addition next; //might be null
 }
-struct Multiplication{
-   /*0 for multiplication with '*', 
-     1 for division addition with '/' */
-   int type; 
+struct Multiplication{ 
    struct * Atomic this;
-   struct * Multiplication next;
+   struct * Multiplication next; //might be null
 }
 struct Atomic{
    /* -1 for nested brackets '( )', 
      otherwise integer literal */
-   int type; 
-   struct * Addition nested;
+   int value; 
+   struct * Addition nested; //might be null
 }
 {% endhighlight %}
 
 and then you can represent `1+3*7` as
 
-    \ Addition (type=0)
-    |-- this=Multiplication (type=-1)
-    |   |-- this=Atomic (type=1, nested=NULL)
+    \ Addition
+    |-- this=Multiplication
+    |   |-- this=Atomic (value=1, nested=NULL)
     |   `-- next=NULL
-    |-- next=Multiplication (type=0) 
-        |-- this=Atomic (type=3, nested=NULL)
-        `-- next=Multiplication (type=-1)
-            |-- this=Atomic (type=7, nested=NULL)
+    |-- next=Multiplication
+        |-- this=Atomic (value=3, nested=NULL)
+        `-- next=Multiplication
+            |-- this=Atomic (value=7, nested=NULL)
             `-- next=NULL
         
 The problem with this approach is that:
@@ -604,7 +546,15 @@ struct AST{
 
 {% endhighlight %}
 
-is a good idea. In real-life however, you don't actually see long arrays of addition all that often. Usually the operations will be mixed together very often. This holds especially true for more complex languages where instead of 4 operations `-`, `+`, `*`, `/`, you have 10 or 20 of them. Then the likelyhood of this being any actual optimisation is nearly zero. The worst part is that you still need to pay the overhead of this "optimisation". 
+is a good idea. In real-life however, you don't actually see long arrays of addition all that often. Usually the operations will be mixed together very often. This holds especially true for more complex languages where instead of 2 operations  `+`, `*` you have 10 or 20 of them. Then the likelyhood of this being any actual optimisation is nearly zero. The worst part is that you still need to pay the overhead of this "optimisation". 
 
 1. First overhead comes from the fact that now you also need to store the length of array and probably  manage relocations and resizing. It's alot of heavyweight machinery that will slow you down more often than help. 
 2. Second overhoad is much more dangerous - it's the increase in logical complexity of performing recursion of such data structures. You need to generalize all your induction to n-ary operations and suddenly a lot of new corner cases appear. This makes the development more error-prone.
+
+### Bonus code for reentrant parser
+
+The perser we made above was good for beginning but in real-life applications you would often want to compile multiple files at the same time. This required multiple instances of parser which cannot be achieved with this static API and global variables. Moreover, instead of just printing output with `printf`, you might want to actually get some result back from `yyparse`. For this reason you need this reentrant parser:
+
+[https://github.com/aleksander-mendoza/aleksander-mendoza.github.io/tree/master/code/reentrant_bison](https://github.com/aleksander-mendoza/aleksander-mendoza.github.io/tree/master/code/reentrant_bison) 
+
+I added there lots of explanatory comments, so you can follow them almost like a tutorial.
