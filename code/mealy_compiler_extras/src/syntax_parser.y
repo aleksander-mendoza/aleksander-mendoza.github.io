@@ -1,35 +1,13 @@
-//This is necessary to tell bison to generate reentrant parser
 %define api.pure full
-//This specifies additional arguments to yylex()
 %lex-param {void *scanner}
-//This specifies additional arguments to yyparse()
-%parse-param {void *scanner} {struct BisonOutput *out}
-/*We use 
-  void *scanner
-but in reality it is 
-  YYSTYPE *scanner
-Unfortunately using YYSTYPE would introduce circular 
-dependency between flex and bison header so we use void* instead
-(it is a common work-around used in many flex&bison programs)
-*/
-%{
+%parse-param {void *scanner} {struct M * out}
 
-/*This struct will be used by syntax_parser.h, 
-so make sure you define it before #include "syntax_parser.h" */
-struct BisonOutput{
-    int out; 
-    //add here any fields you wish
-}; /*This will be later used to return output from bison 
-in the code associated with Start rule in grammar.
-*/
-//You have to include this first (contains definition of YYSTYPE )
+%{
+#include "glushkov.h"
 #include "syntax_parser.h"
-// and then include this (contains yyscan_t, but for us it's just a void*)
 #include "lex.yy.h"
 #include <stdio.h>
-
-
-void yyerror (void *scanner, struct BisonOutput *out, char const *msg);
+void yyerror (void *scanner, struct M * out, char const *msg);
 %}
 
 /*
@@ -41,78 +19,87 @@ void yyerror (void *scanner, struct BisonOutput *out, char const *msg);
 //Instead use api.value.type
 */
 
-%define api.value.type union /* Generate YYSTYPE from types of tokens. 
-In this case there is only one <int> type and it belongs to NUM. 
-Hence Bison will generate the following union:
+%define api.value.type union
 
-union YYSTYPE{
-    // This is instead of ival
-    int NUM; 
-    // The rest is not really important for us, but Bison needs it
-    int Addition; 
-    int Multiplication; 
-    int Atomic;
-}
-*/
-
-%token <int> NUM
+%token <char*> STRING
 %token BEG
 %token END
 %token PLUS
-%token MUL
+%token STAR
+%token COLON
 
-%type<int> Addition
-%type<int> Multiplication
-%type<int> Atomic
+%type<struct AST *> Union
+%type<struct AST *> Concat
+%type<struct AST *> Kleene
+%type<struct AST *> Letter
+%type<struct AST *> Output
 
 %start Start
 
 %%
 Start:
-   Addition { 
-        /*We can use 
-          BisonOutput *out 
-        because we added it in %parse-param*/
-        out->out = $1;
-       
-   }
-   | /*this matches empty string*/
-   ;
-
-Addition:
-    Multiplication PLUS Addition { 
-     $$ = $1 + $3; 
+    Union { 
+        int sigmaSize = count($1);
+        char * stack = malloc(sizeof(char)* sigmaSize);
+        localize($1,0,stack);
+        struct T t = f($1,sigmaSize);
+        *out = TtoM(&t,stack,sigmaSize);
+        freeTContents(&t,sigmaSize);
+        free(stack);
+        freeAST($1);
     }
-    | Multiplication 
+    | 
     ;
 
-Multiplication:
-    Atomic MUL Multiplication { $$ = $1 * $3; }
-    | Atomic
+Union:
+    Concat PLUS Union { $$ = mkUnion($1,$3); }
+    | Concat {$$ = $1;}
     ;
 
-Atomic:
-    NUM { $$ = $1; }
-    | BEG Addition END  { $$ = $2; }
+Concat:
+    Kleene Concat { $$ = mkConcat($1,$2); }
+    | Kleene {$$ = $1;}
     ;
+
+Kleene: 
+    Output {$$ = $1;}
+    | Output STAR { $$ = mkKleene($1); }
+    ;
+
+Output: 
+    Letter COLON STRING { $$ = mkOutput($1, $3);}
+    | Letter { $$ = $1; }
+    ;
+
+Letter:
+    STRING { 
+        $$ = mkEpsilon();
+        for(int i=0;($1)[i]!=0;i++){
+            $$ = mkConcat($$,mkLetter(($1)[i])); 
+        }
+    }
+    | BEG Union END  { $$ = $2; }
+    ;
+
 
 %%
 
-void yyerror (void *scanner, struct BisonOutput *out, char const *msg) {
+void yyerror (void *scanner, struct M *out, char const *msg) {
     fprintf(stderr, "--> %s\n", msg);
 }
 
 int main(void) {
     yyscan_t scanner;
     yylex_init(&scanner);
-    struct BisonOutput out;//this is used to received output back from bison
+    struct M m = {.i=-1,.stateCount=-1,.delta=NULL,.F=0};
     yyset_in(STDIN_FILENO, scanner);
-    int output_code = yyparse(scanner, &out);
+    int output_code = yyparse(scanner, &m);
     if(output_code==0){
-        printf("Final result=%d\n",out.out); 
+        printM(&m);
     }else{
         printf("Syntax error\n"); 
     }
+    freeMContents(&m);
     yylex_destroy(scanner);
 
     

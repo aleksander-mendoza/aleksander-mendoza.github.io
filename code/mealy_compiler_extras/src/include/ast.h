@@ -1,5 +1,5 @@
-#ifndef H_MAIN
-#define H_MAIN
+#ifndef H_AST
+#define H_AST
 struct AST;
 
 struct ASTLetter{

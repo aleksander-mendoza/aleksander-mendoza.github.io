@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "main.h"
+#include "ast.h"
 
 struct AST * mkUnion(struct AST * lhs,struct AST * rhs){
 	struct AST * node = malloc(sizeof(struct AST));

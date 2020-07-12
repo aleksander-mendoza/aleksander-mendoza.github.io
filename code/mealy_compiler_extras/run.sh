@@ -1,3 +1,3 @@
 #!/bin/bash
-bin/first_compiler
+bin/final_mealy_compiler
 
