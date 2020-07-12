@@ -475,7 +475,7 @@ Start:
 
 If you compile and run you should see a tree in this format:
 
-    $ echo "4+3+5\*5" | ./run.sh 
+    $ echo "4+3+5*5" | ./run.sh 
     +
         4
         +
@@ -553,7 +553,7 @@ is a good idea. In real-life however, you don't actually see long arrays of addi
 
 ### Bonus code for reentrant parser
 
-The perser we made above was good for beginning but in real-life applications you would often want to compile multiple files at the same time. This required multiple instances of parser which cannot be achieved with this static API and global variables. Moreover, instead of just printing output with `printf`, you might want to actually get some result back from `yyparse`. For this reason you need this reentrant parser:
+The parser we made above was good for beginning but in real-life applications you would often want to compile multiple files at the same time. This requires multiple instances of parser, but it cannot be achieved with this static API and global variables. Moreover, instead of just printing output with `printf`, you might want to actually get some result back from `yyparse`. For this reason you need this reentrant parser:
 
 [https://github.com/aleksander-mendoza/aleksander-mendoza.github.io/tree/master/code/reentrant_bison](https://github.com/aleksander-mendoza/aleksander-mendoza.github.io/tree/master/code/reentrant_bison) 
 

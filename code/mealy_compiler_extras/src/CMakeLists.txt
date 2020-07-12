@@ -14,10 +14,12 @@ FLEX_TARGET(SyntaxScanner syntax_scanner.l  ${CMAKE_CURRENT_BINARY_DIR}/syntax_s
 ADD_FLEX_BISON_DEPENDENCY(SyntaxScanner SyntaxParser)
 # add the executable
 add_executable(first_compiler
+	main.c
+    include/main.h
     ${BISON_SyntaxParser_OUTPUTS}
     ${FLEX_SyntaxScanner_OUTPUTS}
 )
-# We need to include lex.yy.h
+target_include_directories(web_mealy_compiler PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(first_compiler PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 # Set C version
 set_property(TARGET first_compiler PROPERTY C_STANDARD 11)
