@@ -1,3 +1,4 @@
+#include "formal_languages.h"
 #include "glushkov.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,24 +54,6 @@ int localize(struct AST * root, int offset, char * stack){
     exit(1);
 }
 
-void free1D(char ** mat,int size){
-    for(int i=0;i<size;i++){
-        free(mat[i]);
-    }
-    free(mat);
-}
-void free2D(char *** mat,int size){
-    for(int i=0;i<size;i++){
-        free1D(mat[i],size);
-    }
-    free(mat);
-}
-void free2DShallow(char *** mat,int size){
-    for(int i=0;i<size;i++){
-        free(mat[i]);
-    }
-    free(mat);
-}
 void freeMContents(struct M * m){
     if(m->i==-1)return;
     free1D(m->F,m->stateCount);
@@ -204,13 +187,7 @@ char * run(struct M * m, char * input){
     }
     return output;
 }
-char * copyStr(char * str){
-    if(str==NULL)return NULL;
-    char * n = malloc(sizeof(char)*(strlen(str)+1));
-    n[0]='\0';
-    strcat(n,str);
-    return n;
-}
+
 struct M TtoM(struct T * t,char * stack, int sigmaSize){
     struct M m;
     m.stateCount = sigmaSize+1;//there is one state for every symbols in 
@@ -265,92 +242,6 @@ struct M TtoM(struct T * t,char * stack, int sigmaSize){
     return m;
 }
 
-char * concat(char * x,char * y){
-    if(x==NULL || y==NULL)return NULL;
-    char * n = malloc(sizeof(char)*(strlen(x)+strlen(y)+1));
-    strcpy(n,x);
-    strcat(n,y);
-    return n;
-}
-char * epsilon(){
-    char * n = malloc(sizeof(char)*1);
-    n[0]='\0';
-    return n;
-} 
-char ** empty(int sigmaSize){
-    char ** n = malloc(sizeof(char*)*sigmaSize);
-    for(int i=0;i<sigmaSize;i++){
-        n[i] = NULL;
-    }
-    return n;
-}
-char ** singleton(char inputSymbol,char * outputString, int sigmaSize){
-    char ** n = empty(sigmaSize);
-    n[inputSymbol] = outputString;
-    return n;
-}
-char** setConcatStr(char ** x,int size,char * y){
-    char ** n = malloc(sizeof(char*)*size);
-    for(int i = 0;i<size;i++){
-        n[i] = concat(x[i],y);
-    }
-    return n;
-}
-char** strConcatSet(char * x,int size,char ** y){
-    char ** n = malloc(sizeof(char*)*size);
-    for(int i = 0;i<size;i++){
-        n[i] = concat(x,y[i]);
-    }
-    return n;
-}
-char*** concatProd(char ** x,char ** y,int size){
-    char *** n = malloc(sizeof(char**)*size);
-    for(int i = 0;i<size;i++){
-        n[i] = malloc(sizeof(char*)*size);
-    }
-    for(int i = 0;i<size;i++){
-        for(int j = 0;j<size;j++){
-            n[i][j] = concat(x[i],y[j]);
-        }
-    }
-    return n;
-}
-char*** empty2D(int size){
-    char *** n = malloc(sizeof(char**)*size);
-    for(int i = 0;i<size;i++){
-        n[i] = malloc(sizeof(char*)*size);
-        for(int j = 0;j<size;j++){
-            n[i][j] = NULL;
-        }
-    }
-    return n;
-}
-char* unionSingleton(char * lhs,char * rhs){
-    if(lhs){
-        if(rhs){
-            printf("Nondeterminism!");
-            exit(1);
-        }else{
-            return lhs;
-        }
-    }else{
-        return rhs;    
-    }
-}
-char** unionInPlaceLhs(char ** lhs,char ** rhs,int size){
-    for(int i=0;i<size;i++){
-        lhs[i]=unionSingleton(lhs[i],rhs[i]);
-    }
-    return lhs;
-}
-char*** union2DInPlaceLhs(char *** lhs,char *** rhs,int size){
-    for(int i=0;i<size;i++){
-        for(int j=0;j<size;j++){
-            lhs[i][j]=unionSingleton(lhs[i][j],rhs[i][j]);
-        }
-    }
-    return lhs;
-}
 
 struct T f(struct AST * root, int sigmaSize){
     switch(root->type){
@@ -425,66 +316,83 @@ struct T f(struct AST * root, int sigmaSize){
     fprintf(stderr,"Unexpected type %d\n",root->type);
     exit(1);
 }
-void freeAST(struct AST * root){
-    switch(root->type){
-    case 0:
-        freeAST(root->uni.lhs);
-        freeAST(root->uni.rhs);
-        free(root);
-        return;
-    case 1:
-        freeAST(root->concat.lhs);
-        freeAST(root->concat.rhs);
-        free(root);
-        return;
-    case 2:
-        freeAST(root->kleene.child);
-        free(root);
-        return;
-    case 3:
-        freeAST(root->output.child);
-        free(root->output.outStr);
-        free(root);
-        return;
-    case 4:
-        free(root);
-        return;
-    case 5:
-        free(root);
-        return;
-    }
-    fprintf(stderr,"Unexpected type %d\n",root->type);
-    exit(1);
-}
+
 void inductivePrint(struct AST * root,int size,int indentation){
     struct T t = f(root,size);
     printT(&t,size);
     printSpaces(indentation);
     switch(root->type){
-    case 0:
+    case AST_UNION:
         printf("+\n");
         inductivePrint(root->uni.lhs,size,indentation+2);
         inductivePrint(root->uni.rhs,size,indentation+2);
         return;
-    case 1:
+    case AST_CONCAT:
         printf(".\n");
         inductivePrint(root->concat.lhs,size,indentation+2);
         inductivePrint(root->concat.rhs,size,indentation+2);
         return;
-    case 2:
+    case AST_KLEENE:
         printf("*\n");
         inductivePrint(root->kleene.child,size,indentation+2);
         return;
-    case 3:
+    case AST_OUTPUT:
         printf(":%s\n",root->output.outStr);
         inductivePrint(root->output.child,size,indentation+2);
         return;
-    case 4:
-        printf("%c %d\n", root->letter.literal,root->letter.literal);
+    case AST_WEIGHT_AFTER:
+    	printf("_ %d\n",root->weightAfter.weight);
+        inductivePrint(root->weightAfter.child,size,indentation+2);
         return;
-    case 5:
+    case AST_WEIGHT_BEFORE:
+    	printf("_ %d\n",root->weightBefore.weight);
+        inductivePrint(root->weightBefore.child,size,indentation+2);
+    case AST_RANGE:
+        printf("[%d-%d]  [%c-%c]\n", 
+        	root->range.from,root->range.to,
+        	root->range.from,root->range.to);
+        return;
+    case AST_EPSILON:
         printf("epsilon\n");
         return;
+    }
+    fprintf(stderr,"Unexpected type %d\n",root->type);
+    exit(1);
+}
+
+
+struct AST * substituteVars(struct Vars * root, struct hashmap_s * idToVars){
+	switch(root->type){
+    case VARS_UNION:
+        return mkUnion(substituteVars(root->uni.lhs,idToVars),
+        	substituteVars(root->uni.rhs,idToVars));
+    case VARS_CONCAT:
+        return mkConcat(substituteVars(root->concat.lhs,idToVars),
+        	substituteVars(root->concat.rhs,idToVars));
+    case VARS_KLEENE:
+        return mkKleene(substituteVars(root->kleene.child,idToVars));
+    case VARS_OUTPUT:
+        return mkOutput(substituteVars(root->output.child,idToVars),
+        	copyStr(root->output.outStr));
+    case VARS_WEIGHT_AFTER:
+        return mkWeightAfter(substituteVars(root->weightAfter.child,idToVars),
+        	root->weightAfter.weight);
+    case VARS_WEIGHT_BEFORE:
+        return mkWeightBefore(substituteVars(root->weightBefore.child,idToVars),
+        	root->weightBefore.weight);
+    case VARS_RANGE:
+        return mkRange(root->range.from,root->range.to);
+    case VARS_VAR:{
+    	char * id = root->var.id;
+    	struct AST * defined = hashmap_get(idToVars,id,strlen(id));
+    	if(defined==NULL){
+    		fprintf(stderr,"Undefined variable %s\n",id);
+    		exit(1);
+    	}
+        return copyAST(defined);
+    }
+    case VARS_EPSILON:
+        return mkEpsilon();
     }
     fprintf(stderr,"Unexpected type %d\n",root->type);
     exit(1);

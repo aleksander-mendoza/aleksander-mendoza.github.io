@@ -15,3 +15,8 @@ Presentation can be found [here](/presentations/mealy_machines.html)
 
 
 Article can be found [here](/pdf/functional_mealy.pdf)
+
+
+(Update from 21<sup>st</sup> July 2021)
+
+More rigorous version of the article can be found [here](/pdf/multitape_automata.pdf), but it lacks Glushkov's algorithm and focuses only on multitape automata.

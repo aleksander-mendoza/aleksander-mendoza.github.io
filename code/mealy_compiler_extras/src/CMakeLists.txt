@@ -18,6 +18,7 @@ add_executable(final_mealy_compiler
 	glushkov.c
     include/ast.h
     include/glushkov.h
+    include/hashmap.h
     ${BISON_SyntaxParser_OUTPUTS}
     ${FLEX_SyntaxScanner_OUTPUTS}
 )

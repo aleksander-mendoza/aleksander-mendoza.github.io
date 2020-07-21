@@ -518,6 +518,7 @@ You might ask yourself, why do we even bother with weighted Mealy machines, if t
 1. weighted Mealy machines often usually smaller than their corresponding non-weighted counterparts. It can be proved that there exist weighted Mealy machines that are exponentially smaller than their equivalent functional Mealy machines.
 2. it's a good introduction to probabilistic Mealy machines
 
+
 ### Hybrid of Mealy-Moore automata
 
 Consider an automaton that is a mix of both Mealy and Moore models. It has outputs on all edges just like Mealy machine **and** is also has Moore-style output on accepting states. 
