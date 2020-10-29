@@ -536,7 +536,7 @@ _X = {(a,{x,y}), (b,{z})}&isin;&Sigma;'&times;&Gamma;\*_ and _Y = {(q,{0,1}), (r
 
 Again, notice that because _B_ and _E_ always yield functions _&Sigma;' &rarr; &Gamma;\*_, the _L_ will also yield functions _L(&phi;)&sub;&Sigma;'&Sigma;'&rarr;&Gamma;\*_.
 
-Having all of the definitions for _A_, _B_, _E_ and _L_ ready, we can now move on to third phase of the algorithm. We need to turn _B_, _E_ and _L_ into automaton. We shall use a very specific model of Mealy machine, that is, the [hybrid Mealy-Moore machine](/transducers_intuitively.html#hybrid-of-mealy-moore-automata).
+Having all of the definitions for _A_, _B_, _E_ and _L_ ready, we can now move on to third phase of the algorithm. We need to turn _B_, _E_ and _L_ into automaton. We shall use a very specific model of Mealy machine, that is, the [subsequential transducer](/transducers_intuitively.html#Subsequential_transducers).
 
 All symbols from _&Sigma;'_ should be treated as states of the machine. Additionally we include _&epsilon;_ as the unique initial state. Hence the set of states _Q_ equals _Q=&Sigma;' &cup; {&epsilon;}_. We shall put a transition between _x,y&isin;&Sigma;'&sub;Q_ whenever _(xy,z) &isin; L(&phi;)_ with _z_ being the transition output. We also put transitions from _&epsilon; &isin; Q_ to the state _x &isin; &Sigma;'_ for all those _x_'es such that _(x,z) &isin; B(&phi;)_. The Moore-style outputs for each state are determined by _E(&phi;)_. That is, if _(x,z) &isin; E(&phi;)_ then the state _x_ will be an accepting state which prints Moore-style output _z_. Lastly we add Moore-style output to state _&epsilon;_ if _z&isin;A(&phi;)_.
 
@@ -917,7 +917,7 @@ a:'(null)'
 
 ### Data structure for automata
 
-We should use hybrid Mealy-Moore machine. Check out the section on more [formal perspective](/transducers_intuitively.html#formal-perspective) for this model. In C we could implement it like this
+We should use subsequential transducer. Check out the section on more [formal perspective](/transducers_intuitively.html#formal-perspective) for this model. In C we could implement it like this
 
 {% highlight C %}
 struct Transition{

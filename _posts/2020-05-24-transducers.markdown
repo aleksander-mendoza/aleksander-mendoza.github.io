@@ -6,13 +6,17 @@ categories: automata
 permalink: /transducers_intuitively.html
 ---
 
+# WORK IN PROGRESS
+
 **Contents**
 * TOC
 {:toc}
 Note: This post assumes you already have basic understanding of finite state machines and formal languages.
 
 
-### Mealy and Moore machines for sequential circuits
+
+
+### Mealy and Moore machines
 
 Consider an example of finite state automaton as below
 
@@ -80,7 +84,7 @@ One can also convert Mealy machines to equivalent Moore machines and vice versa.
 - [Mealy -> Moore](https://www.youtube.com/watch?v=-etILQcfgTg&t=451s) 
 - [Moore -> Mealy](https://www.youtube.com/watch?v=HEVWx4irOx4&t=268s) 
 
-### Mealy and Moore machines in theory of formal languages
+### Transducers
 
 The original definitions created by Mealy and Moore were very useful in hardware engineering. Unfortunately there are some problems if one tries to use them in to study formal languages. The clocking mechanism doesn't exist in automata theory. Lack of accepting states, makes it unclear how to interpret languages recognized by such models. This further complicates the operations of concatenation, Kleene closure and union. 
 
@@ -139,7 +143,7 @@ Instead of only registering the latest output, let's concatenate all of it into 
 </tbody>
 </table>
 
-Now the automaon _M<sub>2</sub>_ works like a function that takes string and returns string, hence one may write _M<sub>2</sub> : &Sigma;* &rarr; &Sigma;*_ and _M<sub>2</sub>(&epsilon;)=&epsilon;_, _M<sub>2</sub>(1)=0_, _M<sub>2</sub>(11)=01_ and so on. This "function" is defined on all strings in _&Sigma;*_ (in this case _&Sigma; = {0,1}_ ).
+Now the automaon _M<sub>2</sub>_ works like a function that takes string and returns string, hence one may write _M<sub>2</sub> : &Sigma;* &rarr; &Sigma;*_ and _M<sub>2</sub>(&epsilon;)=&epsilon;_, _M<sub>2</sub>(1)=0_, _M<sub>2</sub>(11)=01_ and so on. This "function" is defined on all strings in _&Sigma;*_ (in this case _&Sigma; = {0,1}_ ). 
 
 The exact same thing could be done for Moore machines. Consider _M_ again. The "function" _M : &Sigma;* &rarr; &Sigma;*_ would behave a bit differently from _M<sub>2</sub>_ because it returns its output "earlier". Hence _M(&epsilon;)=0_, _M(1)=00_, _M(11)=001_, _M(111)=0011_ and so on. 
 
@@ -519,7 +523,7 @@ You might ask yourself, why do we even bother with weighted Mealy machines, if t
 2. it's a good introduction to probabilistic Mealy machines
 
 
-### Hybrid of Mealy-Moore automata
+### Subsequential transducers
 
 Consider an automaton that is a mix of both Mealy and Moore models. It has outputs on all edges just like Mealy machine **and** is also has Moore-style output on accepting states. 
 
@@ -569,7 +573,7 @@ This in fact is equivalent to using &epsilon;-transitions as follows:
 
 ![mealy_and_moore_as_epsilon](/assets/mealy_and_moore_as_epsilon.png)
 
-The truly interesting aspect of such hybrid machines becomes visible when we also allow for entire strings on transition outputs. Then the model becomes equivalent in power so functional machines, without requiring use of any &epsilon;-transitions! There is a procedure for converting any functional (nondeterministic with &epsilon;-transitions but without &epsilon;-cycles) Mealy machine to hybrid Mealy-Moore machine. I will explain it below with the examples
+The truly interesting aspect of such machines becomes visible when we also allow for entire strings on transition outputs. Then the model becomes equivalent in power so functional machines, without requiring use of any &epsilon;-transitions! There is a procedure for converting any functional (nondeterministic with &epsilon;-transitions but without &epsilon;-cycles) transducer to subsequential transducer. I will explain it below with the examples
 
 #### Converting functional machines
 
@@ -584,7 +588,7 @@ Before starting the procedure, let's first make sure that this automaton is inde
 
 Each state of this graph represents several states of the original automaton. For instance the state tagged `0,1,4` corresponds to set of states _q<sub>0</sub>_, _q<sub>1</sub>_ and _q<sub>4</sub>_. There is also blank state which represents empty set. Each transition shows how the nondeterminism is affected by subsequent input. If you analyse this graph you will see that there is no conflict of outputs at any point. For instance  initially the automaton starts in _q<sub>0</sub>_, which immediately transitions to _q<sub>1</sub>_ and _q<sub>4</sub>_ over &epsilon;. Then if the next input is _0_, the state _q<sub>0</sub>_ will be "lost" as it doesn't have any transition for input _0_. The state _q<sub>1</sub>_ will transition to _q<sub>2</sub>_ and _q<sub>3</sub>_. The state _q<sub>4</sub>_ doesn't have any outgoing transitions and will get "lost" too. This yields transition `0 -> ` + `1 -> 2,3` + `4 -> ` = `0,1,4 -> 2,3`. There is no conflict here because none of the states _q<sub>0</sub>_, _q<sub>1</sub>_, _q<sub>4</sub>_ transition to the same next state simultaneously. There would be a conflict, if for example there was `0 -> 2` + `1 -> 2,3` + `4 -> ` = `0,1,4 -> 2,2,3`.
 
-Alright, so now that we know the machine is functional, we can begin converting it to Mealy-Moore hybrid.
+Alright, so now that we know the machine is functional, we can begin converting it to subsequential transducer.
 In the first stage of convertion procedure, we will try to find all &epsilon;-transitions <ins> that do not come out of initial state </ins> and remove them. Here you can see one such transition between _q<sub>1</sub>_ and _q<sub>4</sub>_. It can be eliminated as follows:
 
 ![mealy_func_to_mealy_moore_3](/assets/mealy_func_to_mealy_moore_3.png)
@@ -622,7 +626,7 @@ The final phase of the procedure is to add missing Moore output to all other acc
 
 #### Formal perspective
 
-The mathematical definition of Mealy-Moore hybrid machine is a tuple (Q,i,&Sigma;,&Gamma;,&delta;,F) where
+The mathematical definition of subsequential transducer is a tuple (Q,i,&Sigma;,&Gamma;,&delta;,F) where
 
 > Q is the set of states  
 > i&isin;Q is the initial state  
