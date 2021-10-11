@@ -3,7 +3,7 @@ body {
   color: rgba(0,0,0,0.87);
   font-family: Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
-  padding: 0;
+  padding: 100px 0px 100px;
 }
 .inlined-code {
   background: #f1f1f1;
@@ -58,6 +58,9 @@ body {
   padding: 32px 24px;
   border-radius: 3px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
 }
 .multi-choice-answer-correct, .multi-choice-answer-wrong, .choice-answer-correct, .choice-answer-wrong {
   background-color: white;
@@ -147,7 +150,7 @@ body {
 .segment-markdown {
   background: white;
   max-width: 80%;
-  margin: 100px auto 0px;
+  margin: 0px auto 0px;
   padding: 32px 24px;
   border-radius: 3px;
 }
@@ -168,7 +171,11 @@ body {
   margin: 16px 0 24px;
   font-size: 14px;
 }
-
+.graph-svg {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
 #load {
   color: rgba(0,0,0,0.4);
   text-align: center;

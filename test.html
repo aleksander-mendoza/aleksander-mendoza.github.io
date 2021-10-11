@@ -44,7 +44,12 @@ and a video</p>
 <p>Text with link <a href="/efg">abc</a> and<br/>
 a line break and <b>bold</b> and <i>italic</i> and <i><b>both</b></i></p>
 
-<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">Click <b>bold here</b> to expand</button><div class="expandable-block-content"><p>Expantable section here</p></div>
+<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">
+Click <b>bold here</b> to expand
+</button>
+<div class="expandable-block-content">
+<p>Expantable section here</p>
+</div>
 
 <p>a paragraph here</p>
 
@@ -56,18 +61,28 @@ a line break and <b>bold</b> and <i>italic</i> and <i><b>both</b></i></p>
 </code></pre>
 
 
-<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">See another expandible block <code class="inlined-code">code here</code></button><div class="expandable-block-content"><p>Second expandable section here</p></div>
+<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">
+See another expandible block <code class="inlined-code">code here</code>
+</button>
+<div class="expandable-block-content">
+<p>Second expandable section here</p>
+</div>
 
-<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">Code block inside</button><div class="expandable-block-content"><p>Expandable section with</p>
+<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">
+Code block inside
+</button>
+<div class="expandable-block-content">
+<p>Expandable section with</p>
 
 
 <pre><code class="language-plaintext">a code block
 </code></pre>
 
 
-<p>inside and an inlined <img src="/test_2.svg" class="inlined-math-svg"/> formula</p></div></div>
+<p>inside and an inlined <img src="/test_2.svg" class="inlined-math-svg"/> formula</p>
+</div></div>
 
-<div class="segment-questions"><div class="segment-question"><p>Some question?</p>
+<div class="segment-questions"><div class="segment-question" ><p>Some question?</p>
 
 
 <pre><code class="language-plaintext">with code
@@ -89,9 +104,14 @@ block here
 <button class="choice-ready-button" onclick="ready_choice_answer(this)">Ready!</button></div>
 </div>
 
-<div class="segment-question"><p>Another question</p>
+<div class="segment-question" style="display:none"><p>Another question</p>
 
-<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">Hint</button><div class="expandable-block-content"><p>here is some hint for you</p></div>
+<button type="button" class="expandable-block-button" onclick="toggle_expandable(this)">
+Hint
+</button>
+<div class="expandable-block-content">
+<p>here is some hint for you</p>
+</div>
 
 <div class="segment-answers"><div class="multi-choice-answer-wrong" onclick="select_multi_choice_answer(this)"><p>only one answer</p></div>
 
@@ -100,7 +120,7 @@ block here
 <button class="multi-choice-ready-button" onclick="ready_multi_choice_answer(this)">Ready!</button></div>
 </div>
 
-<div class="segment-question"><p>Now type something in the text field</p>
+<div class="segment-question" style="display:none"><p>Now type something in the text field</p>
 
 <div class="segment-answers"></div>
 </div></div>

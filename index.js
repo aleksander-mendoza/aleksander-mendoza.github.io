@@ -20,29 +20,42 @@ function select_choice_answer(caller){
 }
 function select_multi_choice_answer(caller){
     caller.classList.toggle("active-multi-choice-answer")
-    ready = caller.parentElement.querySelector('.choice-ready-button')
-    ready.classList.add('choice-ready-button-active')
+    ready = caller.parentElement.querySelector('.multi-choice-ready-button')
+    ready.classList.add('multi-choice-ready-button-active')
 }
+const NEXT_MSG = "Next question"
 function ready_multi_choice_answer(caller){
-    caller.parentElement.querySelectorAll('.multi-choice-explanation-wrong, .multi-choice-explanation-correct').forEach(s=>
-        s.style.maxHeight = s.scrollHeight + "px"
-    )
-    caller.parentElement.querySelectorAll('.multi-choice-answer-wrong').forEach(s=> {
-        s.style.backgroundColor = 'red';
-        s.classList.remove('active-multi-choice-answer');
-    })
-    caller.parentElement.querySelectorAll('.multi-choice-answer-correct').forEach(s=>{
-        s.style.backgroundColor = 'green';
-        s.classList.remove('active-multi-choice-answer');
-    })
-    if(caller.parentElement.nextElementSibling){
-        caller.innerText = "Next question"
+    question_div = caller.parentElement.parentElement
+    next_question_div = question_div.nextElementSibling
+    if(caller.innerText == NEXT_MSG){
+        question_div.style.display = "none"
+        next_question_div.style.display = "block"
     }else{
-        caller.style.display = 'none'
+        caller.parentElement.querySelectorAll('.multi-choice-explanation-wrong, .multi-choice-explanation-correct').forEach(s=>
+            s.style.maxHeight = s.scrollHeight + "px"
+        )
+        caller.parentElement.querySelectorAll('.multi-choice-answer-wrong').forEach(s=> {
+            s.style.backgroundColor = 'red';
+            s.classList.remove('active-multi-choice-answer');
+        })
+        caller.parentElement.querySelectorAll('.multi-choice-answer-correct').forEach(s=>{
+            s.style.backgroundColor = 'green';
+            s.classList.remove('active-multi-choice-answer');
+        })
+        if(next_question_div){
+            caller.innerText = NEXT_MSG
+        }else{
+            caller.style.display = 'none'
+        }
     }
 }
 function ready_choice_answer(caller){
-    if(caller.classList.contains('choice-ready-button-active')){
+    question_div = caller.parentElement.parentElement
+    next_question_div = question_div.nextElementSibling
+    if(caller.innerText == NEXT_MSG){
+        question_div.style.display = "none"
+        next_question_div.style.display = "block"
+    }else if(caller.classList.contains('choice-ready-button-active')){
         caller.parentElement.querySelectorAll('.choice-explanation-wrong, .choice-explanation-correct').forEach(s=>
             s.style.maxHeight = s.scrollHeight + "px"
         )
@@ -54,8 +67,8 @@ function ready_choice_answer(caller){
             s.style.backgroundColor = 'green';
             s.classList.remove('active-choice-answer');
         })
-        if(caller.parentElement.nextElementSibling){
-            caller.innerText = "Next question"
+        if(next_question_div){
+            caller.innerText = NEXT_MSG
         }else{
             caller.style.display = 'none'
         }
