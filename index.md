@@ -16,7 +16,7 @@ end
 ```
 We can use `(* *)` as comments. Those are ignored by Isabelle.
 
-### Inductive definitions
+### Inductive data types
 
 The set of natural numbers `nat` is defined inductively as
 
@@ -43,7 +43,7 @@ Isabelle uses `⇒` (written as `=>` in ASCII) to denote the type of functions. 
 ```
 value "add Zero (Suc (Suc Zero))"
 ```
-![output.png](evaluation output)
+![evaluation output](output.png)
 
 The second case applies when the first argument is a successor `Suc x` of some number `x`. For example `1+2` outputs `3` as follows
 
@@ -112,7 +112,7 @@ theorem add_associativity : "add x (add y z) = add (add x y) z"
 ```
 If you place your cursor below the theorem and toggle the "Proof state" button you will see the state of your proof
 
-![proof_state.png](proof state)
+![proof state](proof_state.png)
 
 When dealing with inductive types a good idea is to prove theorems by induction. This is done with `apply(induct_tac x)` tactic.
 
@@ -239,9 +239,130 @@ primrec add :: "nat ⇒ nat ⇒ nat" where
 ```
 Only after changing the definition to `Suc (add x y)` all of the theorems became much easier to prove. This is something you will see often when working with Isabelle or any other proof assistant. There are many equivalent definitions but some are more elegant than others.
 
-### Type declarations and axiomatization
+### Inductive predicates
 
-The previous definition of natural numbers `nat` was simplified. The one actually provided by Isabelle is more complicated. First we declare `ind` but instead of definining it, we only state its axioms
+Data types are limited to representing finite entities. For example we can use `lists` to store a finite number of even numbers
+
+```
+value "[0::Nat.nat,2,4,6]"
+(* it prints
+"[0, 2, 4, 6]"
+  :: "Nat.nat list"  <- notice Nat.nat comes from the imported Main. It's not our own definition.
+*)
+```
+In many programming languages we can also use hash-maps to do something like
+
+```
+# This is Python code
+is_even = {
+ 0 : True,
+ 1 : False,
+ 2 : True,
+ 3 : False,
+ 4 : True
+}
+```
+
+The problem with data types is that they cannot store infinite sets. We could turn the hash-map `is_even` into a function instead
+
+```
+datatype nat = Zero | Suc nat 
+
+fun is_even :: "nat ⇒ bool" where 
+"is_even Zero = True" |
+"is_even (Suc Zero) = False" |
+"is_even (Suc(Suc n)) = is_even n"
+```
+
+Now calling `is_even (Suc (Suc Zero))` is equivalent to looking up a hash-map in Python `is_even[2]` but we are no longer limited to finite sets. Notice that we had to use `fun` because `primrec` does not allow nested patterns `is_even (Suc(Suc n))` on the left. We will investigate `fun` in depth later.
+
+So functions are like infinite hash-maps. What about lists? We could imagine that their infinite analogue are `inductive` predicates
+
+```
+inductive Even :: "nat ⇒ bool" where
+zero: "Even Zero"
+| double: "Even (Suc (Suc n))" if "Even n" for n
+```
+
+While `is_even` returns `True` on numbers that are even and `False` on those that aren't, the `inductive` predicate `Even` can be proved to hold for even numbers but cannot be proved to hold for anything else. By analogy a list only contains elements that belong to it whereas a hash-map must also hold odd numbers (and mark them as `False`).
+
+To prove that `4` is even we can proceed as follows
+
+```
+theorem "Even (Suc (Suc (Suc (Suc Zero))))"
+  apply(rule double)
+  apply(rule double)
+  apply(rule zero)
+  done
+```
+
+We can also prove that `is_even x` is true only when `Even x` holds 
+
+```
+theorem "Even m ⟹ is_even m" 
+  apply(induction rule: Even.induct)
+  by(simp_all)
+```
+The long arrow `⟹` is logical implication (written `==>` in ASCII).
+
+The tactic `apply(induction rule: Even.induct)` says that we want to prove the theorem by induction and yields the following two subgoals. 
+
+```
+ 1. is_even Zero
+ 2. ⋀n. Even n ⟹ is_even n ⟹ is_even (nat.Suc (nat.Suc n))
+```
+
+Those are then easy to prove using `apply(rule double)` and `apply(rule zero)` so we just let Isabelle do the rest automatically by calling `by(simp_all)`. 
+
+##### Final remarks
+
+If you need to prove statements about the negative cases (here those would be odd numbers) then working with recursive functions is easier.
+On the other hand if you do not care about negative cases and only want to prove statements about positive ones (even numbers) then `inductive` definitions often yeild simpler proofs. 
+
+In some cases it is impossible to give recursive definitions. In particular those are problems that are [not decidable](https://en.wikipedia.org/wiki/Decidability). Then our only option is to use `inductive` definitions (which is related to [semi-decidability](https://en.wikipedia.org/wiki/Decidability_(logic)#Semidecidability)).
+
+### Type declarations, axiomatization 
+
+#### Sets
+
+We can declare a new type without providing any definition. This is done with `typedecl` keyword. Of course such types are not very useful on their own so they are typically combined with some `axiomatization`. For example the following is how Isabelle defines sets
+
+```
+typedecl 'a set
+
+axiomatization Collect :: "('a ⇒ bool) ⇒ 'a set" ― ‹comprehension›
+  and member :: "'a ⇒ 'a set ⇒ bool" ― ‹membership›
+  where mem_Collect_eq [iff, code_unfold]: "member a (Collect P) = P a"
+    and Collect_mem_eq [simp]: "Collect (λx. member x A) = A"
+```
+
+The apostrophe in front of `'a` is a special notation that indicates that `a` is not any specific type. Instead `'a` can be substituted for any other concrete type. It works like a wildcard or like generic types in many programming languages.
+
+We do not know anything about `'a set` other than that it can be created with function `Collect` and that its members can be queried with `member`. We know that those two functions are "inverse" of each other which more precisely expressed by axioms `mem_Collect_eq` and `Collect_mem_eq`. We can use those two facts like we would use any other theorem. Axioms are theorems that we assume to be true without giving any proofs. We also do not need to provide definitions for `Collect` and `member`. They are like "interface" functions in some programming languages.
+
+We introduce notation 
+
+```
+notation
+  member  ("'(∈')") and
+  member  ("(_/ ∈ _)" [51, 51] 50)
+```
+
+so that we can write `x ∈ X` instead of `member x X`. There is also nice syntax for set comprehension
+
+```
+syntax
+  "_Coll" :: "pttrn ⇒ bool ⇒ 'a set"    ("(1{_./ _})")
+translations
+  "{x. P}" ⇌ "CONST Collect (λx. P)"
+```
+
+so that we can write `{x . P x}` instead of `Collect P` for some predicate `P`. We will investigate `syntax` and `notation` later. Their only purpose is to make things more readable.
+
+
+#### Ordinals
+
+The previous definition of natural numbers `nat` was simplified. The one actually provided by Isabelle is more complicated. Before we can see it we have to first declare `ind` but instead of definining it, we only state its axioms
 
 ```
 typedecl ind
@@ -253,11 +374,29 @@ axiomatization Zero_Rep :: ind and Suc_Rep :: "ind ⇒ ind"
 
 ```
 
-We do not know anything about `ind` other than `Suc_Rep_inject` and `Suc_Rep_not_Zero_Rep`. We can use those two facts like we would use any other theorem. Axioms are theorems that we assume to be true without giving any proofs.
-
 Notice that `ind` behaves just like `nat` but unlike `Suc`, the `Suc_Rep_inject` might be applied infinitely. It is possible to use `ind` to express infinity `∞` but `nat` could never do that (due to `size`).
 
-##### All types are inhabited
+Nonetheless, most of the time we **want** to work with finite numbers. For this purpose we define predicate `Nat` that includes only finite elements of `ind`
+
+```
+inductive Nat :: "ind ⇒ bool"
+  where
+    Zero_RepI: "Nat Zero_Rep"
+  | Suc_RepI: "Nat i ⟹ Nat (Suc_Rep i)"
+```
+
+
+Now the real definition of `nat` is a subset of `ind set` that consists of only finite numbers `Nat`. 
+
+```
+typedef nat = "{n. Nat n}"
+  morphisms Rep_Nat Abs_Nat
+  using Nat.Zero_RepI by auto
+```
+Infinite numbers, known as [ordinals](https://en.wikipedia.org/wiki/Ordinal_number), will be covered later. The meaning of `morphisms` will be explained soon but it's not important at this point.
+
+
+#### All types are inhabited
 
 Another important example of an axiom is
 
@@ -304,55 +443,7 @@ The `undefined` axiom has some major implications which will manifest themselves
 
 
 
-## Going back to sets
-
-You have seen inductive definition, recursive functions and proofs by induction. Those are elements characteristic of constructive logic. In Coq or Agda those would be our only tools. Isabelle is much richer. 
-
-Sets do not have constructors but are axiomatized instead
-
-```
-axiomatization Collect :: "('a ⇒ bool) ⇒ 'a set" ― ‹comprehension›
-  and member :: "'a ⇒ 'a set ⇒ bool" ― ‹membership›
-  where mem_Collect_eq [iff, code_unfold]: "member a (Collect P) = P a"
-    and Collect_mem_eq [simp]: "Collect (λx. member x A) = A"
-
-```
-This tells us that if we have any predicate `'a ⇒ bool` then we can "collect all its elements" into a set. This is called set comprehension. If we are given a set, we can test its membership using  `member` function. Those need not be constructive mathematical objects. The two propositions `mem_Collect_eq` and `Collect_mem_eq` are axioms which state that `Collect` and `member` are inverses of each other. The notation `λx.` stands for [lambda expression](https://en.wikipedia.org/wiki/Lambda_expression).
-
-Previously we introduced a simplified definition of `nat`. The real one is more complicated. First we introduce `ind` type in a similar way as we did for `'a set`.
-
-```
-typedecl ind
-
-axiomatization Zero_Rep :: ind and Suc_Rep :: "ind ⇒ ind"
-  ― ‹The axiom of infinity in 2 parts:›
-  where Suc_Rep_inject: "Suc_Rep x = Suc_Rep y ⟹ x = y"
-    and Suc_Rep_not_Zero_Rep: "Suc_Rep x ≠ Zero_Rep"
-
-```
-
-Our definition of `nat` was inductive and could only handle finite numbers. `ind` is more general and can also include infinite "data structures". It is like a `coinductive` data type (although Isabelle has `codatatype` for this purpose). A programmer may think of it as if  `Suc_Rep_inject` and `Suc_Rep_not_Zero_Rep` were axioms describing a very simple iterator. 
-
-```
-inductive Nat :: "ind ⇒ bool"
-  where
-    Zero_RepI: "Nat Zero_Rep"
-  | Suc_RepI: "Nat i ⟹ Nat (Suc_Rep i)"
-```
-
-
-```
-notation
-  member  ("'(∈')") and
-  member  ("(_/ ∈ _)" [51, 51] 50)
-```
-
-```
-syntax
-  "_Coll" :: "pttrn ⇒ bool ⇒ 'a set"    ("(1{_./ _})")
-translations
-  "{x. P}" ⇌ "CONST Collect (λx. P)"
-```
+### Basic set theory
 
 ```
 
