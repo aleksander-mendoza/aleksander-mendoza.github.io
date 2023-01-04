@@ -1,0 +1,4 @@
+theory 
+inductive_set Fin :: 'a set \<Rightarrow> 'a set set for A :: 'a set where
+empty: {} \<in> Fin A
+| insert: a \<in> A =\<Rightarrow> B \<in> Fin A =\<Rightarrow> insert a B \<in> Fin A
