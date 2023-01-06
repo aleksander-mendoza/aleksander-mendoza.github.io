@@ -2,7 +2,7 @@
 
 This is a highly practical tutorial for Isabelle. There already exists plenty of excellent introductory material but I couldn't find any resource that would start from basics and gradually go into practical proofs and theories with clear connection to various fields of mathematics such as topology, algebra, analysis, probability. It's also a good way to get deeply familiar with the standard library. I wrote this tutorial as I was learning the materials myself. Hopefully it will help others save their time. It is for those we like to learn by doing and seeing lots of examples. The official resources are better suited for detailed and more theoretical treatment of Isabelle.
 
-## Introduction and first steps
+## Fundamentals of Isabelle
 
 Let's start by creating a file `Playground.thy`
 with the following contents
@@ -604,7 +604,106 @@ theorem "Abs_nat (Rep_nat x) = x"
 ```
 If we do not provide the names of abstraction and representation functions ourselves, `typedef` will auto-generate them for us. Their default names are dictated by the naming convention like on the example.
 
+### Syntactic sugars and Lists
+
+Isabelle defines lists as follows.
+
+```
+(* use no_notation to avoid conflicts with list already defined in Main library *)
+no_notation Nil ("[]") and Cons (infixr "#" 65) and append (infixr "@" 65)
+
+datatype (set: 'a) list =
+    Nil  ("[]")
+  | Cons 'a "'a list"  (infixr "#" 65)
+```
+
+The `("[]")` introduces a pretty notation for the empty list `Nil` and `(infixr "#" 65)` is a syntactic sugar for appending to a list.
+For example 
+
+```
+value " x # y # z # []" (* is of type "'a list *)
+``` 
+
+is equivalent to writing
+
+```
+value "Cons x (Cons y (Cons z Nil))"
+```
+
+The keyword `infixr` specifies associativity of the operation. Compare 
+
+```
+value " x # (y # (z # []))" (* is of type "'a list *)
+
+value "((x # y) # z) # []" (* is of type "'a list list list *)
+```
+
+with the alternative definition that uses `infixl` instead
+
+```
+datatype (set: 'a) list =
+    Nil  ("[]")
+  | Cons 'a "'a list"  (infixl "#" 65)
+  
+value " x # y # z # []" (* is of type  "'a list list list" *)
+
+value " x # (y # (z # []))" (* is of type "'a list" *)
+``` 
+Also see what happens if we now switch the order of arguments of `Cons`
+
+```
+datatype (set: 'a) list =
+    Nil  ("[]")
+  | Cons "'a list" 'a (infixl "#" 65)
+  
+value "[] # x # y # z" (* is of type  "'a list" *)
+
+value "[] # (x # (y # z))" (* is of type "'a list list list" *)
+```
+
+From now on, let's stick to our first definition, that is `Cons 'a "'a list"  (infixr "#" 65)`.
+We can make our notation even more readable by introducing a custom bracket notation
+
+```
+syntax
+  "_list" :: "args => 'a list"    ("[(_)]")
+
+translations
+  "[x, xs]" == "x#[xs]"
+  "[x]" == "x#[]"
+```
+We can now write `[x,y,z]` instead of `x # y #z # []`.
+The `transaltions` will be used to automatically turn 
+
+```
+value "x # y # z # []"
+```
+into brackets and print the following output
+
+```
+"[x, y, z]"
+  :: "'a Test.list"
+```
+
+as equivalent 
+We can define list concatenation as follows.
+
+```
+primrec append :: "'a list ⇒ 'a list ⇒ 'a list" (infixr "@" 65) where
+append_Nil: "[] @ ys = ys" |
+append_Cons: "(x#xs) @ ys = x # xs @ ys"
+```
+
+The way `syntax` and `translations` work can be easily deduced from the example. The  `(_)` that appears in `("[(_)]")` is a wildcard that matches whatever we write between `[` and `]`. Then `translations` further work on that string and rewrite it into `#` and `[]` notation.
+
 ### Type classes
+
+Very often a proof that works for one object could also work another. 
+
+```
+class plus =
+  fixes plus :: "'a ⇒ 'a ⇒ 'a" (infixl "⊕" 70)
+```
 
 ### Quotient types
 
@@ -624,23 +723,37 @@ qed
 
 #### Rational numbers
 
-TODO: All of the topics below. Foralizing maths will be easier if we start from very abstract and pure mathematics (algebra, topology) and the slowly specialize to more "concrete" stuff (like real/complex analysis). So functional analysis will actually come before linear algebra. And so on.
+TODO: All of the topics below. Foralizing maths will be easier if we start from very abstract and pure mathematics (algebra, topology) and the slowly specialize to more "concrete" stuff (like real/complex analysis). So functional analysis will actually come before linear algebra. And so on. 
 
-### Basic set theory
+## Basic set theory
 
-### Abstract algebra
+## Abstract algebra
 
-### Pointset topology
+## Pointset topology
+
+## Basic real Analysis
 
 ### Real numbers
 
-### Basic real Analysis
+## Functional Analysis
 
-### Functional Analysis
+## Linear algebra
 
-### Linear algebra
+## Measure theory
 
-### Diff Analysis
+## Probability
+
+## Differential Equations
+
+## Signal processing
+
+## Information theory
+
+## Statistics and Pattern recognition 
+
+## Control theory
+
+
 
 ```
 lemma CollectI: "P a ⟹ a ∈ {x. P x}"
