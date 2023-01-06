@@ -33,22 +33,22 @@ We can represent `0` as `Zero`, number `1` as `Suc Zero`, number `2` as `Suc (Su
 Functions can be defined usig `primrec `. For example addition can be introduced as the follows
 
 ```
-primrec add :: "nat ⇒ nat ⇒ nat" where
-"add Zero y = y" |
-"add (Suc x) y = Suc (add x y)"
+primrec plus :: "nat ⇒ nat ⇒ nat" where
+"plus Zero y = y" |
+"plus (Suc x) y = Suc (plus x y)"
 ```
 Isabelle uses `⇒` (written as `=>` in ASCII) to denote the type of functions. If `x` and `y` are types then `x ⇒ y` is a function type (`⇒` has [left associativity](https://en.wikipedia.org/wiki/Operator_associativity)). Such mathematical expressions must be enclosed in double quotes `" "`. After the type comes `where` keyword which marks the beginning of function **specification** (this is not function *definition*! You'll see later). Our function has two cases separated by `|`.
  The first case applies when the first argument is `Zero`. You can test it with the `value` command, for example `0+2` is
 
 ```
-value "add Zero (Suc (Suc Zero))"
+value "plus Zero (Suc (Suc Zero))"
 ```
 ![evaluation output](output.png)
 
 The second case applies when the first argument is a successor `Suc x` of some number `x`. For example `1+2` outputs `3` as follows
 
 ```
-value "add (Suc Zero) (Suc (Suc Zero))" (* this prints "nat.Suc (nat.Suc (nat.Suc Zero))" *)
+value "plus (Suc Zero) (Suc (Suc Zero))" (* this prints "nat.Suc (nat.Suc (nat.Suc Zero))" *)
 ```
 
 
@@ -108,7 +108,7 @@ Primitive recursive functions are very limiting and not [Turing-complete](https:
 To write proofs we can use `theorem` keyword. For example let's write proof that addition is associative, that is, `x+(y+z)=(x+y)+z` for all natural numers `x,y,z`
 
 ```
-theorem add_associativity : "add x (add y z) = add (add x y) z" 
+theorem add_associativity : "plus x (plus y z) = plus (plus x y) z" 
 ```
 If you place your cursor below the theorem and toggle the "Proof state" button you will see the state of your proof
 
@@ -117,7 +117,7 @@ If you place your cursor below the theorem and toggle the "Proof state" button y
 When dealing with inductive types a good idea is to prove theorems by induction. This is done with `apply(induct_tac x)` tactic.
 
 ```
-theorem add_associativity : "add x (add y z) = add (add x y) z" 
+theorem add_associativity : "plus x (plus y z) = plus (plus x y) z" 
   apply(induct_tac x)
 ```
 Now the state of the proof becomes
@@ -125,15 +125,15 @@ Now the state of the proof becomes
 ```
 proof (prove)
 goal (2 subgoals):
- 1. add Zero (add y z) = add (add Zero y) z
- 2. ⋀x. add x (add y z) = add (add x y) z ⟹
-         add (nat.Suc x) (add y z) = add (add (nat.Suc x) y) z
+ 1. plus Zero (plus y z) = plus (plus Zero y) z
+ 2. ⋀x. plus x (plus y z) = plus (plus x y) z ⟹
+         plus (Suc x) (plus y z) = plus (plus (Suc x) y) z
 ```
-We have two subgoals. First one is to prove that initial condition for `Zero`, second is to prove recursive case while having access to  inductive hypothesis `add x (add y z) = add (add x y) z`. The long double arrow `⟹` (written `==>` in ASCII) is the logical implication.
+We have two subgoals. First one is to prove that initial condition for `Zero`, second is to prove recursive case while having access to  inductive hypothesis `plus x (plus y z) = plus (plus x y) z`. The long double arrow `⟹` (written `==>` in ASCII) is the logical implication.
 Symbol `⋀` is the universal quantifier "for all x". The goals we have now could be simplified. Isabelle can do a lot of the leg work automatically by using `apply(auto)` tactic.
 
 ```
-theorem add_associativity : "add x (add y z) = add (add x y) z" 
+theorem add_associativity : "plus x (plus y z) = plus (plus x y) z" 
   apply(induct_tac x)
    apply(auto)
   done
@@ -152,20 +152,20 @@ and we can add `done` to finish the theorem.
 Here are a few more examples of easy theorems
 
 ```
-theorem add_suc_rev : " add x (Suc y) = add (Suc x) y" 
+theorem add_suc_rev : " plus x (Suc y) = plus (Suc x) y" 
   by(induct_tac x, auto)
   
-theorem add_suc_out : "add (Suc x) y = Suc (add x y)" 
+theorem add_suc_out : "plus (Suc x) y = Suc (plus x y)" 
   by(induct_tac x, auto)
   
-theorem add_zero : "add x Zero = x" 
+theorem add_zero : "plus x Zero = x" 
   by(induct_tac x, auto)
 ```
 
 The `by` keyword  is a shorthand one-line notation for simple proofs and is equivalent to the multi-line proof we did before. Let's try a more complex theorem.
 
 ```
-theorem add_commutativity : "add x y = add y x" 
+theorem add_commutativity : "plus x y = plus y x" 
   apply(induct_tac x)
   	apply(simp)
 ```
@@ -174,13 +174,13 @@ We start with induction and simplification but it only gets us so far
 ```
 proof (prove)
 goal (2 subgoals):
- 1. y = add y Zero
- 2. ⋀x. add x y = add y x ⟹ nat.Suc (add y x) = add y (nat.Suc x)
+ 1. y = plus y Zero
+ 2. ⋀x. plus x y = plus y x ⟹ Suc (plus y x) = plus y (Suc x)
 ```
 We have alreayd proved the first subgoal in form of `add_zero` theorem. We can tell Isabelle to use it by using `simp add: add_zero`.
 
 ```
-theorem add_commutativity : "add x y = add y x" 
+theorem add_commutativity : "plus x y = plus y x" 
   apply(induct_tac x)
    apply(simp add:add_zero)
 ```
@@ -189,7 +189,7 @@ This solves the first subgoal
 ```
 proof (prove)
 goal (1 subgoal):
- 1. ⋀x. add x y = add y x ⟹ add (nat.Suc x) y = add y (nat.Suc x)
+ 1. ⋀x. plus x y = plus y x ⟹ plus (Suc x) y = plus y (Suc x)
 ```
 
 The tactic `simp` is similar to `auto` but it only applies to a single subgoal and can be extended in many ways (like with `add:`) that `auto` cannot. `auto` uses more heuristics and can solve more problems out-of-the-box. `simp` gives more control to us. Now, to solve the remaining subgoal, not even `simp` is detailed enough. We will have to tell Isabelle which substitution rules to use exactly (`simp` and `auto` do this behind the scenes). We want to apply `apply(subst add_suc_rev)`
@@ -197,7 +197,7 @@ The tactic `simp` is similar to `auto` but it only applies to a single subgoal a
 ```
 proof (prove)
 goal (1 subgoal):
- 1. ⋀x. add x y = add y x ⟹ add (nat.Suc x) y = add (nat.Suc y) x
+ 1. ⋀x. plus x y = plus y x ⟹ plus (Suc x) y = plus (Suc y) x
 ```
 
 and then `apply(subst add_suc_out)`
@@ -205,7 +205,7 @@ and then `apply(subst add_suc_out)`
 ```
 proof (prove)
 goal (1 subgoal):
- 1. ⋀x. add x y = add y x ⟹ nat.Suc (add x y) = add (nat.Suc y) x
+ 1. ⋀x. plus x y = plus y x ⟹ Suc (plus x y) = plus (Suc y) x
 ```
 
 and again `apply(subst add_suc_out)`
@@ -213,13 +213,13 @@ and again `apply(subst add_suc_out)`
 ```
 proof (prove)
 goal (1 subgoal):
- 1. ⋀x. add x y = add y x ⟹ nat.Suc (add x y) = nat.Suc (add y x)
+ 1. ⋀x. plus x y = plus y x ⟹ Suc (plus x y) = Suc (plus y x)
 ```
 
 then we finish off with `apply(simp)`. The full proof looks as follows
 
 ```
-theorem add_commutativity : "add x y = add y x" 
+theorem add_commutativity : "plus x y = plus y x" 
   apply(induct_tac x)
    apply(simp add:add_zero)
   apply(subst add_suc_rev)
@@ -230,14 +230,14 @@ theorem add_commutativity : "add x y = add y x"
 ```
 
 ##### The thinking process 
-You might be wondering how I arrived at this proof. In fact, I started from the end. My initial goal was to prove `add_commutativity` but I coudln't. Whenever you're stuck in Isabelle, it's always a good idea to backtrack and try to prove something simpler first. I tried proving all the smaller auxiliary theorems like `add_suc_out` first. Even those were difficult because initially my definition of `add` looked like this
+You might be wondering how I arrived at this proof. In fact, I started from the end. My initial goal was to prove `add_commutativity` but I coudln't. Whenever you're stuck in Isabelle, it's always a good idea to backtrack and try to prove something simpler first. I tried proving all the smaller auxiliary theorems like `add_suc_out` first. Even those were difficult because initially my definition of `plus` looked like this
 
 ```
-primrec add :: "nat ⇒ nat ⇒ nat" where
-"add Zero y = y" |
-"add (Suc x) y = add x (Suc y)" (* Suc applied to y! *)
+primrec plus :: "nat ⇒ nat ⇒ nat" where
+"plus Zero y = y" |
+"plus (Suc x) y = plus x (Suc y)" (* Suc applied to y! *)
 ```
-Only after changing the definition to `Suc (add x y)` all of the theorems became much easier to prove. This is something you will see often when working with Isabelle or any other proof assistant. There are many equivalent definitions but some are more elegant than others.
+Only after changing the definition to `Suc (plus x y)` all of the theorems became much easier to prove. This is something you will see often when working with Isabelle or any other proof assistant. There are many equivalent definitions but some are more elegant than others.
 
 ### Inductive predicates
 
@@ -612,7 +612,7 @@ Isabelle defines lists as follows.
 (* use no_notation to avoid conflicts with list already defined in Main library *)
 no_notation Nil ("[]") and Cons (infixr "#" 65) and append (infixr "@" 65)
 
-datatype (set: 'a) list =
+datatype 'a list =
     Nil  ("[]")
   | Cons 'a "'a list"  (infixr "#" 65)
 ```
@@ -641,7 +641,7 @@ value "((x # y) # z) # []" (* is of type "'a list list list *)
 with the alternative definition that uses `infixl` instead
 
 ```
-datatype (set: 'a) list =
+datatype 'a list =
     Nil  ("[]")
   | Cons 'a "'a list"  (infixl "#" 65)
   
@@ -652,7 +652,7 @@ value " x # (y # (z # []))" (* is of type "'a list" *)
 Also see what happens if we now switch the order of arguments of `Cons`
 
 ```
-datatype (set: 'a) list =
+datatype 'a list =
     Nil  ("[]")
   | Cons "'a list" 'a (infixl "#" 65)
   
@@ -696,14 +696,162 @@ append_Cons: "(x#xs) @ ys = x # xs @ ys"
 
 The way `syntax` and `translations` work can be easily deduced from the example. The  `(_)` that appears in `("[(_)]")` is a wildcard that matches whatever we write between `[` and `]`. Then `translations` further work on that string and rewrite it into `#` and `[]` notation.
 
-### Type classes
+The infix operators can be defined for any function, not only constructors. For example 
 
-Very often a proof that works for one object could also work another. 
+```
+primrec append :: "'a list ⇒ 'a list ⇒ 'a list" (infixr "@" 65) where
+append_Nil: "[] @ ys = ys" |
+append_Cons: "(x#xs) @ ys = x # xs @ ys"
+```
+
+allows us to concatenate two lists using `x @ y` instead of having to write `append x y`
+
+```
+value "[x,y] @ [z,w]"
+(* prints 
+"[x, y, z, w]"
+  :: "'a list"
+*)
+```
+
+### Type classes and semigroups
+
+##### List and nat are semigroups
+
+Very often different mathematical objects share common properties. For example compare `append` for `list` with `plus` for `nat`
+
+```
+no_notation Nil ("[]") and Cons (infixr "#" 65) and append (infixr "@" 65) and plus (infixl "+" 65) 
+
+datatype nat = Zero ("0") | Suc nat
+
+primrec plus :: "nat ⇒ nat ⇒ nat" (infixl "+" 65) where
+"0 + y = y" |
+"(Suc x) + y = Suc (x + y)"
+
+datatype 'a list =
+    Nil  ("[]")
+    | Cons 'a "'a list"  (infixr "#" 65)
+
+primrec append :: "'a list ⇒ 'a list ⇒ 'a list" (infixr "@" 65) where
+append_Nil: "[] @ ys = ys" |
+append_Cons: "(x#xs) @ ys = x # xs @ ys"
+```
+
+It holds for both that 
+
+```
+theorem app_assoc : "x @ (y @ z) = (x @ y) @ z"
+  by (induct_tac x) auto
+
+theorem add_assoc : "x + (y + z) = (x + y) + z"
+  by (induct_tac x) auto
+```
+
+In mathematics, structures like this are called *semigroups*. There are infinitely many other entities that satisfy associativity law. Many theorems about those objects
+can be proved in the exact same way, without referring to the details of their definitions. We can use type classes to save ourselves work and write general proofs that will be reused for all semigroups. A programmer might know type classes under  Let's work through an example to better understand this.
+
+##### Instantiating natural numbers
+
+Let's erase our previous code and start fresh. We start by defining `class` of all structures that can be added together using `plus` function.
 
 ```
 class plus =
-  fixes plus :: "'a ⇒ 'a ⇒ 'a" (infixl "⊕" 70)
+  fixes plus :: "'a ⇒ 'a ⇒ 'a"  (infixl "+" 65)
 ```
+
+Next we have to specify that `nat` can be added and belongs to the class `plus`. This is done using `instantiation` command.
+
+```
+instantiation nat :: plus
+begin
+  
+primrec plus_nat :: "nat ⇒ nat ⇒ nat" where
+"plus_nat 0 y = y" |
+"plus_nat (Suc x) y = Suc (plus_nat x y)"
+
+instance ..
+end
+```
+
+The naming convention requires us to call the function `plus_nat` instead of just `plus`. If you place your cursor right after `begin` you will see output
+
+```
+instantiation
+  nat :: plus
+  plus_nat == plus_class.plus :: nat ⇒ nat ⇒ nat
+```
+telling you that `nat` is an subtype of type `plus`. The second line says that you have to define function named `plus_nat` which will correspond to the `fixes plus`  required by the class. Once we finished defining `plus_nat` we use `instance ..` to provide all necessary proofs. In this case our class does not need any proofs so we just type `..`. 
+
+##### Instantiating lists
+
+We proceed analogically for `list`
+
+```
+
+datatype 'a list =
+    Nil  ("[]")
+    | Cons 'a "'a list"  (infixr "#" 65)
+
+instantiation  list :: (type) plus
+begin
+  
+primrec plus_list :: "'a list ⇒ 'a list ⇒ 'a list" where
+"plus_list []  ys = ys" |
+"plus_list (x#xs) ys = x # (plus_list xs ys)"
+
+instance ..
+end
+```
+
+Notice an important detail here. The type `list` takes a type argument `'a`. We are not allowed to write
+
+```
+instantiation  "'a list" :: plus
+```
+Instead the type parameter becomes a parameter of `plus`.
+
+##### Restricting type parameters
+
+The `(type)` in the snippet above means that we can accept any type in place of `'a`.  It is possible to restrict the scope of `'a` to only those types that belong some class. For example consider definining `plus` for pairs as follows
+
+```
+(a, b) + (c, d) = (a + c, b + d)
+```
+
+This requires that `a` and `c` can be added together. Same goes for `b` and `d`. To express this in Isabelle we can use pairs (also known as tuples to programmers or Cartesian product to mathematicians)
+
+```
+value "(x, y) :: nat × nat" (* with pretty syntax *)
+value "(Pair x y) :: (nat, nat) prod" (* without pretty syntax *)
+```
+
+We can define `+` for pairs `'a × 'b` but  we have to assume `'a` and `'b` are restricted to class `plus` too. This can be done as follows
+
+```
+instantiation  prod :: (plus, plus) plus
+begin
+  
+fun plus_prod :: "'a × 'b ⇒ 'a × 'b ⇒ 'a × 'b" where
+"plus_prod (a, b) (c, d) = (a + c, b + d)"
+
+instance ..
+end
+```
+
+We can now use `+` on tuples like we would on any other mathematical object
+
+```
+value "(x, y)+(z, w):: nat × nat"
+(* this prints
+"(x + z, y + w)"
+  :: "nat × nat"
+*)
+```
+
+##### Type classes with axioms 
+
+Type classes are more than just collections of functions. They can also assume certain axioms that those functions must satisfy. 
 
 ### Quotient types
 
