@@ -826,7 +826,7 @@ value "(x, y) :: nat × nat" (* with pretty syntax *)
 value "(Pair x y) :: (nat, nat) prod" (* without pretty syntax *)
 ```
 
-We can define `+` for pairs `'a × 'b` but  we have to assume `'a` and `'b` are restricted to class `plus` too. This can be done as follows
+We can define `+` for pairs `'a × 'b` but  we have to assume `'a` and `'b` are restricted to class `plus` too. This can be done with `prod :: (plus, plus)` notation as follows
 
 ```
 instantiation  prod :: (plus, plus) plus
@@ -851,13 +851,100 @@ value "(x, y)+(z, w):: nat × nat"
 
 ##### Type classes with axioms 
 
-Type classes are more than just collections of functions. They can also assume certain axioms that those functions must satisfy. 
+Type classes are more than just collections of functions. They can also assume certain axioms that those functions must satisfy. For example semigroups  require associativity law `a+(b+c)=(a+b)+c`. This is how Isabelle defines semigroups
+
+```
+class semigroup_add = plus +
+  assumes add_assoc: "(a + b) + c = a + (b + c)"
+begin
+```
+
+It is a class that is a subset of `plus` class (if types are ["meta sets"](#abstraction-and-representation), then type classes are super-sets containing types and other type classes) such that `plus` satisfies `add_assoc` axiom. The `instantiation` of `semigroup_add` will now require `instance proof` block which contains proofs of the necessary axioms and ends with `qed`.
+
+```
+instantiation nat :: semigroup_add
+begin
+instance proof
+  fix a b c :: nat
+  show "(a + b) + c = a + (b + c)"
+  apply(induct_tac a)
+   apply(auto)
+    done
+qed
+end
+```
+
+If you place your cursor at the end of `begin` you will see the following proof state
+
+```
+ 1. ⋀a b c. a + b + c = a + (b + c)
+```
+
+We have already proved this [before](#theorems-and-proofs) using `induct_tac`. The problem now is that you can't use `induct_tac a` because `a` is not fixed yet. We use the command `fix a b c :: nat` in order to make those variables usable in our proofs. Next we have to decide which goal we want to prove by using the `show` command. In this case there is only one class axiom to prove but in other cases there might be multiple theorems that need to be proved.  After `show` we are finally able to write the proof.
+
+##### Proofs that use class axioms
+
+You might be wondering why we've been using the word "axiom" even though we clearly had to provide its proof. Aren't axioms suppose to be theorems that have no proofs?
+That was the case for axioms stated with `axiomatization` command. Here we are working with *class axioms* instead. The reason why we call `add_assoc` an axiom is because we can use it in proofs like this
+
+```
+theorem assoc_left:
+fixes x y z :: "'a::semigroup_add"
+shows "x + (y + z) = (x + y) + z"
+using add_assoc by (rule sym)
+```
+
+The theorem `assoc_left` shows `x + (y + z) = (x + y) + z` but it assumes (`fixes`) that `x`, `y` and `z` are of any type `'a` thet belongs to  `semigroup_add`. We can now use `add_assoc` *as if* it was an axiom. We never made any reference to the type `nat`. It might as well be a `list` or something else. We don't know and it doesn't matter for the proof. The only information about `'a` that the proof is allowed to use are its class axioms. 
 
 ### Quotient types
 
-#### Integer numbers
+##### Integer numbers in mathematics
 
-Sometimes we want to treat certain set elements as if they were one and the same entity. For example we would like to 
+(If you're well-versed in mathematics and know about congruence, feel free to skip straight to [next section](#integer-numbers-in-isabelle).)
+
+Sometimes we want to treat certain set elements as if they were one and the same entity. For example so far we've been only dealing with natural numbers `0, 1, 2...`
+and we defined the `+` operation. The `-` operation cannot be defined on `nat` because `2-3=-1` is not a `nat`. In order to define `2-3` we have to imagine existence of some element `x` such that `x+3=2`. It is clear that `x` is not in `nat`. We can do the same trick as mathematicians did for complex numbers. We can use pairs of natural numbers and pretend that the second one is negative. Here are some examples
+
+```
+(0, 0) stands for 0-0=0
+(1, 0) stands for 1-0=1
+(2, 0) stands for 2-0=2
+(0, 1) stands for 0-1=-1
+(0, 2) stands for 0-1=-2
+```
+
+We can define addition `+` just like we defined it for pairs [before](#restricting-type-parameters). Adding two positive numbers works as expected. 
+
+```
+1+2 stands for (1,0)+(2,0)=(1+2,0+0)=(3,0) stands for 3
+```
+
+Instead of "stands for" let us write `≅` (`\cong`). Mathematicians call this congruence. Adding negative numbers works as well.
+
+```
+-1+(-2) ≅ (0,1)+(0,2)=(0+0,1+2)=(0,3) ≅ -3
+```
+
+The trouble begins when we try to add positive and negative numbers together. It turns out that `-1` can also be written as 
+
+```
+2-3≅(2,0)+(0,3)=(2,3)
+3-4≅(3,0)+(0,4)=(3,4)
+... and so on
+```
+
+The type `nat × nat`contains many different elements that are all congruent to the same integer. In order to define `typedef int` we need an [abstraction function](#abstraction-and-representation) `Abs_int :: nat × nat => int` that works like this
+
+```
+Abs_int (0,1) = -1
+Abs_int (1,2) = -1
+Abs_int (2,3) = -1
+...
+```
+
+But we already said that abstraction and representation functions are inverse of one another. So the `Rep_int :: int => nat × nat` function is in fact not a function at all because it maps  one `int` to infinitely many possible `nat` pairs. 
+
+##### Integer numbers in Isabelle
 
 ```
 quotient_type int = "nat × nat" / "intrel"
