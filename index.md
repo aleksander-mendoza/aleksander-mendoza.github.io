@@ -896,11 +896,12 @@ using add_assoc by (rule sym)
 
 The theorem `assoc_left` shows `x + (y + z) = (x + y) + z` but it assumes (`fixes`) that `x`, `y` and `z` are of any type `'a` thet belongs to  `semigroup_add`. We can now use `add_assoc` *as if* it was an axiom. We never made any reference to the type `nat`. It might as well be a `list` or something else. We don't know and it doesn't matter for the proof. The only information about `'a` that the proof is allowed to use are its class axioms. 
 
+
 ### Quotient types
 
 ##### Integer numbers in mathematics
 
-(If you're well-versed in mathematics and know about congruence, feel free to skip straight to [next section](#integer-numbers-in-isabelle).)
+(If you're well-versed in mathematics and know how integers are represented, feel free to skip straight to [next section](#integer-numbers-in-isabelle).)
 
 Sometimes we want to treat certain set elements as if they were one and the same entity. For example so far we've been only dealing with natural numbers `0, 1, 2...`
 and we defined the `+` operation. The `-` operation cannot be defined on `nat` because `2-3=-1` is not a `nat`. In order to define `2-3` we have to imagine existence of some element `x` such that `x+3=2`. It is clear that `x` is not in `nat`. We can do the same trick as mathematicians did for complex numbers. We can use pairs of natural numbers and pretend that the second one is negative. Here are some examples
@@ -942,21 +943,141 @@ Abs_int (2,3) = -1
 ...
 ```
 
-But we already said that abstraction and representation functions are inverse of one another. So the `Rep_int :: int => nat × nat` function is in fact not a function at all because it maps  one `int` to infinitely many possible `nat` pairs. 
+But we already said that abstraction and representation functions are inverse of one another. So the `Rep_int :: int => nat × nat` function is in fact not a function at all because it maps  one `int` to infinitely many possible `nat × nat` pairs. This cannot be done with `typedef`! Instead we need to take advantage of equivalence classes.
+
+##### Equivalence classes
+
+A relation `R :: 'a => 'a => bool` is called equivalence relation  if it satisfies 3 ("class") axioms
+
+1\. symmetry: `∀x y. R x y ⟶ R y x`
+
+```
+definition symp :: "('a ⇒ 'a ⇒ bool) ⇒ bool"
+  where "symp R ⟷ (∀x y. R x y ⟶ R y x)"
+```
+
+This definition states that `R` is symmetric (`symp r`) if and only if (`⟷`) when `x` is in relation with `y` then `y` is in relation with `x`. (Example: If John is friends with Pete then Pete is friends with John. Anti-example: If John owes money to Pete then it doesn't necessarily mean that Pete owes money to John)
+
+2\. reflexivity: `∀x. R x x`
+
+```
+definition reflp :: "('a ⇒ 'a ⇒ bool) ⇒ bool"
+  where "reflp R ⟷ (∀x. R x x)"
+```
+
+3\. transitivity: `∀x y. x=y`
+
+```
+definition transp :: "('a ⇒ 'a ⇒ bool) ⇒ bool"
+  where "transp R ⟷ (∀x y z. R x y ⟶ R y z ⟶ R x z)"
+```
+
+If some `R` satisfies all of those properties then  `R` is an equivalence relation. This is how Isabelle defines a lemma (synonym for theorem) that states `equivp R`. (Don't pay too much attention to the proof. It relies on many other lemmas you can find in `Main`. If you copy it, it won't work for you unless you prove them too.)
+
+```
+lemma equivpI: "reflp R ⟹ symp R ⟹ transp R ⟹ equivp R"
+  by (auto elim: reflpE sympE transpE simp add: equivp_def)
+```
+
+When `R :: 'a => 'a => bool` is an equivalence relation then we can perform [partial application](https://en.wikipedia.org/wiki/Partial_application) of some `x :: 'a` to `R` and obtain a predicate `R x :: 'a => bool`.  This predicate defines an equivalence class. If you collect `R x` into a set `{ y . (R x) y }` you will obtain a subset of `'a`. The characteristic property of equivalence classes is that those sets are either equal (`{ y . (R x1) y } = { y . (R x2) y }` whenever `R x1 x2`) or disjoint but they cannot intersect. Therefore, Isabelle defines `equivp R` as follows.  
+
+```
+definition equivp :: "('a ⇒ 'a ⇒ bool) ⇒ bool"
+  where "equivp R ⟷ (∀x y. R x y = (R x = R y))"
+```
+
+It states that predicate `R x y` holds if and only if (`=`)  the equivalence classes are equal (`R x = R y`).
+
 
 ##### Integer numbers in Isabelle
+
+Recall that an integer `x :: int` is represented by pair of natural numbers `(a,b) :: nat × nat` such that `x=a-b`. It is possible to check whether two integers `x = xa - xb` and `y=ya - yb` are equal without using `-` operation. This is done as follows
+
+```
+xa - xb = x = y = ya - yb \ to both sides add + xb + yb
+xa + yb = ya + xb
+```
+
+Therefore, we define equivalence relation `intrel`
+
+```
+fun intrel :: "(nat × nat) ⇒ (nat × nat) ⇒ bool"
+  where "intrel (xa, xb) (ya, yb) = (xa + yb = ya + xb)"
+```
+
+Now we can finally define `int` as follows 
 
 ```
 quotient_type int = "nat × nat" / "intrel"
   morphisms Rep_Integ Abs_Integ
 proof (rule equivpI)
-  show "reflp intrel" by (auto simp: reflp_def)
-  show "symp intrel" by (auto simp: symp_def)
-  show "transp intrel" by (auto simp: transp_def)
+  show "reflp intrel"
+    by (auto simp: reflp_def)
+  show "symp intrel" 
+    by (auto simp: symp_def)
+  show "transp intrel"
+    by (auto simp: transp_def)
 qed
 ```
 
-#### Rational numbers
+The command `quotient_type` is similar to `typedef` but this time we divide `nat × nat` into equivalence classes of relation `intrel` and each class is treated as an element of the new set `int`.  The set `int` looks something like this
+
+```
+int = { ..., -2, -1, 0, 1, 2, ... }
+```
+where each number is a subset of `nat × nat`
+
+```
+-1 = {..., (0, 1), (1, 2), (2, 3), (3, 4), (4, 5), ...}
+0 = {..., (0, 0), (1, 1), (2, 2), (3, 3), (4, 4), ...}
+1 = {..., (1, 0), (2, 1), (3, 2), (4, 3), (5, 4), ...}
+```
+
+We cannot use any relation. We have to prove that `intrel` is indeed an equivalence relation. This is done using `proof (rule equivpI)` which requires us to prove 3 goals 
+
+```
+ 1. reflp intrel
+ 2. symp intrel
+ 3. transp intrel
+```
+
+You can apply `unfold` tactic like this
+
+```
+quotient_type int = "nat × nat" / "intrel"
+  morphisms Rep_Integ Abs_Integ
+proof (rule equivpI)
+  show "reflp intrel"
+    apply(unfold reflp_def)
+    by (auto simp: reflp_def)
+  show "symp intrel" 
+    apply(unfold symp_def)
+    by (auto simp: symp_def)
+  show "transp intrel"
+    apply(unfold transp_def)
+    by (auto simp: transp_def)
+qed
+```
+
+and place cursor at the end of each `unfold` to see the full statement that needs to proved
+
+```
+1. ∀x. intrel x x
+2. ∀x y. intrel x y ⟶ intrel y x
+3. ∀x y z. intrel x y ⟶ intrel y z ⟶ intrel x z
+```
+
+*Important remark*: The reason why we need to prove that `intrel` is an equivalence relation is because this ensures that no representation `(a,b)` stands for two different integers. Otherwise an ambiguity would arise and nothing could be proved about `int` later on.
+
+##### Lifting 
+
+```
+lift_definition plus_int :: "int ⇒ int ⇒ int"
+  is "λ(x, y) (u, v). (x + u, y + v)"
+  by clarsimp
+```
+
+
 
 TODO: All of the topics below. Foralizing maths will be easier if we start from very abstract and pure mathematics (algebra, topology) and the slowly specialize to more "concrete" stuff (like real/complex analysis). So functional analysis will actually come before linear algebra. And so on. 
 
