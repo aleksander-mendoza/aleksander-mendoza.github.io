@@ -1,8 +1,4 @@
-# Relearning mathematics using Isabelle 
-
-This is a highly practical tutorial for Isabelle. There already exists plenty of excellent introductory material but I couldn't find any resource that would start from basics and gradually go into practical proofs and theories with clear connection to various fields of mathematics such as topology, algebra, analysis, probability. It's also a good way to get deeply familiar with the standard library. I wrote this tutorial as I was learning the materials myself. Hopefully it will help others save their time. It is for those we like to learn by doing and seeing lots of examples. The official resources are better suited for detailed and more theoretical treatment of Isabelle.
-
-## Fundamentals of Isabelle
+# Fundamentals of Isabelle
 
 Let's start by creating a file `Playground.thy`
 with the following contents
@@ -16,7 +12,7 @@ end
 ```
 We can use `(* *)` as comments. Those are ignored by Isabelle.
 
-### Inductive data types
+## Inductive data types
 
 The set of natural numbers `nat` is defined inductively as
 
@@ -28,7 +24,7 @@ datatype nat = Zero | Suc nat
 
 We can represent `0` as `Zero`, number `1` as `Suc Zero`, number `2` as `Suc (Suc Zero)` and so on. This is widely known as [Peano arithmetic](https://en.wikipedia.org/wiki/Peano_axioms).  
 
-### Functions
+## Functions
 
 Functions can be defined usig `primrec `. For example addition can be introduced as the follows
 
@@ -43,7 +39,7 @@ Isabelle uses `⇒` (written as `=>` in ASCII) to denote the type of functions. 
 ```
 value "plus Zero (Suc (Suc Zero))"
 ```
-![evaluation output](output.png)
+![evaluation output](imgs/output.png)
 
 The second case applies when the first argument is a successor `Suc x` of some number `x`. For example `1+2` outputs `3` as follows
 
@@ -80,7 +76,7 @@ value "size (X3 X1 (X2 X1))" (* now prints "2" *)
 The value of `size` is always a finite number, which brings us to 
 primitive recursion. 
 
-### Primitive recursion
+## Primitive recursion
 
 In Isabelle all functions must terminate. For example the following is illegal
 ```
@@ -103,7 +99,7 @@ which means that they consider all cases (`X1 a`, `X1 b`, ... `Xn c`) of some in
 
 Primitive recursive functions are very limiting and not [Turing-complete](https://en.wikipedia.org/wiki/Turing_completeness), therefore, if `primrec` is not enough, we can use `fun` but we may have to provide our own proof that the recursion  always ends (`fun` will be shown later).
 
-### Theorems and proofs
+## Theorems and proofs
 
 To write proofs we can use `theorem` keyword. For example let's write proof that addition is associative, that is, `x+(y+z)=(x+y)+z` for all natural numers `x,y,z`
 
@@ -112,7 +108,7 @@ theorem add_associativity : "plus x (plus y z) = plus (plus x y) z"
 ```
 If you place your cursor below the theorem and toggle the "Proof state" button you will see the state of your proof
 
-![proof state](proof_state.png)
+![proof state](imgs/proof_state.png)
 
 When dealing with inductive types a good idea is to prove theorems by induction. This is done with `apply(induct_tac x)` tactic.
 
@@ -147,7 +143,7 @@ No subgoals!
 ```
 and we can add `done` to finish the theorem. 
 
-### More complex proofs
+## More complex proofs
 
 Here are a few more examples of easy theorems
 
@@ -229,7 +225,7 @@ theorem add_commutativity : "plus x y = plus y x"
   done
 ```
 
-##### The thinking process 
+### The thinking process 
 You might be wondering how I arrived at this proof. In fact, I started from the end. My initial goal was to prove `add_commutativity` but I coudln't. Whenever you're stuck in Isabelle, it's always a good idea to backtrack and try to prove something simpler first. I tried proving all the smaller auxiliary theorems like `add_suc_out` first. Even those were difficult because initially my definition of `plus` looked like this
 
 ```
@@ -239,7 +235,7 @@ primrec plus :: "nat ⇒ nat ⇒ nat" where
 ```
 Only after changing the definition to `Suc (plus x y)` all of the theorems became much easier to prove. This is something you will see often when working with Isabelle or any other proof assistant. There are many equivalent definitions but some are more elegant than others.
 
-### Inductive predicates
+## Inductive predicates
 
 Data types are limited to representing finite entities. For example we can use `lists` to store a finite number of even numbers
 
@@ -314,16 +310,16 @@ The tactic `apply(induction rule: Even.induct)` says that we want to prove the t
 
 Those are then easy to prove using `apply(rule double)` and `apply(rule zero)` so we just let Isabelle do the rest automatically by calling `by(simp_all)`. 
 
-##### Final remarks
+### When to use inductive over recursive
 
 If you need to prove statements about the negative cases (here those would be odd numbers) then working with recursive functions is easier.
-On the other hand if you do not care about negative cases and only want to prove statements about positive ones (even numbers) then `inductive` definitions often yeild simpler proofs. 
+On the other hand if you do not care about negative cases and only want to prove statements about positive ones (even numbers) then `inductive` definitions often yield simpler proofs. 
 
 In some cases it is impossible to give recursive definitions. In particular those are problems that are [not decidable](https://en.wikipedia.org/wiki/Decidability). Then our only option is to use `inductive` definitions (which is related to [semi-decidability](https://en.wikipedia.org/wiki/Decidability_(logic)#Semidecidability)).
 
-### Type declarations and axiomatization 
+## Type declarations and axiomatization 
 
-#### Sets
+### Sets
 
 We can declare a new type without providing any definition. This is done with `typedecl` keyword. Of course such types are not very useful on their own so they are typically combined with some `axiomatization`. For example the following is how Isabelle defines sets
 
@@ -360,7 +356,7 @@ translations
 so that we can write `{x . P x}` instead of `Collect P` for some predicate `P`. We will investigate `syntax` and `notation` later. Their only purpose is to make things more readable.
 
 
-#### Ordinals
+### Ordinals
 
 The previous definition of natural numbers `nat` was simplified. The one actually provided by Isabelle is more complicated. Before we can see it we have to first declare `ind` but instead of definining it, we only state its axioms
 
@@ -396,7 +392,7 @@ typedef nat = "{n. Nat n}"
 Infinite numbers, known as [ordinals](https://en.wikipedia.org/wiki/Ordinal_number), will be covered later. The meaning of `morphisms` will be explained soon but it's not important at this point.
 
 
-#### All types are inhabited
+### All types are inhabited
 
 Another important example of an axiom is
 
@@ -444,9 +440,9 @@ The `undefined` axiom has some major implications which will manifest themselves
 *Most importantly*, you should be aware that `∀𝑥. 𝑃 𝑥 → ∃𝑥. 𝑃 𝑥` is a valid first-order logic sentence. This is known as [ontological commitment](https://plato.stanford.edu/entries/ontological-commitment/) and is also explained [here](https://math.stackexchange.com/questions/1297521/for-all-x-px-implies-there-exists-x-px). Isabelle is based on first-order logic (actually higher-order logic) and commits to this law, therefore, it is [sound](https://en.wikipedia.org/wiki/Soundness) to assume such an axiom as `undefined`. 
 
 
-### Meta logic 
+## Meta logic 
 
-##### Meta universal quantifier
+### Meta universal quantifier
 
 Isabelle has a meta language. You could have seen it before in form of the `⋀` symbol (written `\And` in ASCII) which works like `∀` (written `\forall` in ASCII). The difference is that `∀` is a constructed function that we imported from Isabelle's Main library
 
@@ -486,7 +482,7 @@ theorem t: "∀ x::nat. P x"
   apply(induct_tac x) (*Error:  No such variable in subgoal: "x" *)
 ```
 
-##### Meta implication
+### Meta implication
 
 There is a similar difference between logical implication `⟶` (written as `-->`) and meta-logic implication `⟹` (`==>`). For example
 
@@ -510,7 +506,7 @@ theorem t: "P x ⟶ P x"
   done
 ```
 
-##### Meta equality
+### Meta equality
 
 Lastly there is logical equality `=` and meta-equality `≡` (`==`). You can use `using [[simp_trace]]` to see a detailed trace of what `simp` is doing behind the scenes 
 
@@ -542,7 +538,7 @@ y = y ≡ True
 
 Meta equality is also used for term substitution and rewriting.
 
-### Abstraction and representation
+## Abstraction and representation
 
 Recall that when defining `nat` [here](#ordinals) 
 
@@ -563,7 +559,7 @@ theorem "Abs_Nat (Rep_Nat x) = x"
 ```
 The axiom `Rep_Nat_inverse` is auto-generated by `typedef`. You can find others by using search tab and typing in `Rep_Nat` or `Abs_Nat`
 
-![query](search.png)
+![query](imgs/search.png)
 
 Lastly, every `typedef` must be finished with a proof of being inhabited. In this case the goal is
 
@@ -590,7 +586,7 @@ which shows that `nat` is inhabited because zero (`Nat.Zero_RepI`) belongs to it
 
 Recall that we have to prove that all types are inhabited because of the `undefined` axiom we discussed [previously](#all-types-are-inhabited).
 
-##### Morphisms can be omitted
+### Morphisms can be omitted
 
 The keyword `morphisms` is optional. We could have written
 
@@ -604,7 +600,7 @@ theorem "Abs_nat (Rep_nat x) = x"
 ```
 If we do not provide the names of abstraction and representation functions ourselves, `typedef` will auto-generate them for us. Their default names are dictated by the naming convention like on the example.
 
-### Syntactic sugars and Lists
+## Syntactic sugars and Lists
 
 Isabelle defines lists as follows.
 
@@ -714,9 +710,9 @@ value "[x,y] @ [z,w]"
 *)
 ```
 
-### Type classes and semigroups
+## Type classes and semigroups
 
-##### List and nat are semigroups
+### List and nat are semigroups
 
 Very often different mathematical objects share common properties. For example compare `append` for `list` with `plus` for `nat`
 
@@ -751,7 +747,7 @@ theorem add_assoc : "x + (y + z) = (x + y) + z"
 In mathematics, structures like this are called *semigroups*. There are infinitely many other entities that satisfy associativity law. Many theorems about those objects
 can be proved in the exact same way, without referring to the details of their definitions. We can use type classes to save ourselves work and write general proofs that will be reused for all semigroups. A programmer might know type classes under  Let's work through an example to better understand this.
 
-##### Instantiating natural numbers
+### Instantiating natural numbers
 
 Let's erase our previous code and start fresh. We start by defining `class` of all structures that can be added together using `plus` function.
 
@@ -783,7 +779,7 @@ instantiation
 ```
 telling you that `nat` is an subtype of type `plus`. The second line says that you have to define function named `plus_nat` which will correspond to the `fixes plus`  required by the class. Once we finished defining `plus_nat` we use `instance ..` to provide all necessary proofs. In this case our class does not need any proofs so we just type `..`. 
 
-##### Instantiating lists
+### Instantiating lists
 
 We proceed analogically for `list`
 
@@ -811,7 +807,7 @@ instantiation  "'a list" :: plus
 ```
 Instead the type parameter becomes a parameter of `plus`.
 
-##### Restricting type parameters
+### Restricting type parameters
 
 The `(type)` in the snippet above means that we can accept any type in place of `'a`.  It is possible to restrict the scope of `'a` to only those types that belong some class. For example consider definining `plus` for pairs as follows
 
@@ -849,7 +845,7 @@ value "(x, y)+(z, w):: nat × nat"
 *)
 ```
 
-##### Type classes with axioms 
+### Type classes with axioms 
 
 Type classes are more than just collections of functions. They can also assume certain axioms that those functions must satisfy. For example semigroups  require associativity law `a+(b+c)=(a+b)+c`. This is how Isabelle defines semigroups
 
@@ -882,7 +878,7 @@ If you place your cursor at the end of `begin` you will see the following proof 
 
 We have already proved this [before](#theorems-and-proofs) using `induct_tac`. The problem now is that you can't use `induct_tac a` because `a` is not fixed yet. We use the command `fix a b c :: nat` in order to make those variables usable in our proofs. Next we have to decide which goal we want to prove by using the `show` command. In this case there is only one class axiom to prove but in other cases there might be multiple theorems that need to be proved.  After `show` we are finally able to write the proof.
 
-##### Proofs that use class axioms
+### Proofs that use class axioms
 
 You might be wondering why we've been using the word "axiom" even though we clearly had to provide its proof. Aren't axioms suppose to be theorems that have no proofs?
 That was the case for axioms stated with `axiomatization` command. Here we are working with *class axioms* instead. The reason why we call `add_assoc` an axiom is because we can use it in proofs like this
@@ -897,9 +893,9 @@ using add_assoc by (rule sym)
 The theorem `assoc_left` shows `x + (y + z) = (x + y) + z` but it assumes (`fixes`) that `x`, `y` and `z` are of any type `'a` thet belongs to  `semigroup_add`. We can now use `add_assoc` *as if* it was an axiom. We never made any reference to the type `nat`. It might as well be a `list` or something else. We don't know and it doesn't matter for the proof. The only information about `'a` that the proof is allowed to use are its class axioms. 
 
 
-### Quotient types
+## Quotient types
 
-##### Integer numbers in mathematics
+### Integer numbers in mathematics
 
 (If you're well-versed in mathematics and know how integers are represented, feel free to skip straight to [next section](#integer-numbers-in-isabelle).)
 
@@ -945,7 +941,7 @@ Abs_int (2,3) = -1
 
 But we already said that abstraction and representation functions are inverse of one another. So the `Rep_int :: int => nat × nat` function is in fact not a function at all because it maps  one `int` to infinitely many possible `nat × nat` pairs. This cannot be done with `typedef`! Instead we need to take advantage of equivalence classes.
 
-##### Equivalence classes
+### Equivalence classes
 
 A relation `R :: 'a => 'a => bool` is called equivalence relation  if it satisfies 3 ("class") axioms
 
@@ -989,7 +985,7 @@ definition equivp :: "('a ⇒ 'a ⇒ bool) ⇒ bool"
 It states that predicate `R x y` holds if and only if (`=`)  the equivalence classes are equal (`R x = R y`).
 
 
-##### Integer numbers in Isabelle
+### Integer numbers in Isabelle
 
 Recall that an integer `x :: int` is represented by pair of natural numbers `(a,b) :: nat × nat` such that `x=a-b`. It is possible to check whether two integers `x = xa - xb` and `y=ya - yb` are equal without using `-` operation. This is done as follows
 
@@ -1069,103 +1065,10 @@ and place cursor at the end of each `unfold` to see the full statement that need
 
 *Important remark*: The reason why we need to prove that `intrel` is an equivalence relation is because this ensures that no representation `(a,b)` stands for two different integers. Otherwise an ambiguity would arise and nothing could be proved about `int` later on.
 
-##### Lifting 
+### Lifting 
 
 ```
 lift_definition plus_int :: "int ⇒ int ⇒ int"
   is "λ(x, y) (u, v). (x + u, y + v)"
   by clarsimp
 ```
-
-
-
-TODO: All of the topics below. Foralizing maths will be easier if we start from very abstract and pure mathematics (algebra, topology) and the slowly specialize to more "concrete" stuff (like real/complex analysis). So functional analysis will actually come before linear algebra. And so on. 
-
-## Basic set theory
-
-## Abstract algebra
-
-## Pointset topology
-
-## Basic real Analysis
-
-### Real numbers
-
-## Functional Analysis
-
-## Linear algebra
-
-## Measure theory
-
-## Probability
-
-## Differential Equations
-
-## Signal processing
-
-## Information theory
-
-## Statistics and Pattern recognition 
-
-## Control theory
-
-
-
-```
-lemma CollectI: "P a ⟹ a ∈ {x. P x}"
-  by simp
-
-lemma CollectD: "a ∈ {x. P x} ⟹ P a"
-  by simp
-
-lemma Collect_cong: "(⋀x. P x = Q x) ⟹ {x. P x} = {x. Q x}"
-  by simp
-```
-
-
-```
-
-abbreviation subset :: "'a set ⇒ 'a set ⇒ bool"
-  where "subset ≡ less"
-
-abbreviation subset_eq :: "'a set ⇒ 'a set ⇒ bool"
-  where "subset_eq ≡ less_eq"
-
-notation
-  subset  ("'(⊂')") and
-  subset  ("(_/ ⊂ _)" [51, 51] 50) and
-  subset_eq  ("'(⊆')") and
-  subset_eq  ("(_/ ⊆ _)" [51, 51] 50)
-
-```
-
-
-```
-
-definition Ball :: "'a set ⇒ ('a ⇒ bool) ⇒ bool"
-  where "Ball A P ⟷ (∀x. x ∈ A ⟶ P x)"   ― ‹bounded universal quantifiers›
-
-definition Bex :: "'a set ⇒ ('a ⇒ bool) ⇒ bool"
-  where "Bex A P ⟷ (∃x. x ∈ A ∧ P x)"   ― ‹bounded existential quantifiers›
-
-```
-
-```
-definition id :: "'a ⇒ 'a"
-  where "id = (λx. x)"
-```
-
-```
-abbreviation inj :: "('a ⇒ 'b) ⇒ bool"
-  where "inj f ≡ inj_on f UNIV"
-
-abbreviation surj :: "('a ⇒ 'b) ⇒ bool"
-  where "surj f ≡ range f = UNIV"
-
-translations ― ‹The negated case:›
-  "¬ CONST surj f" ↽ "CONST range f ≠ CONST UNIV"
-
-abbreviation bij :: "('a ⇒ 'b) ⇒ bool"
-  where "bij f ≡ bij_betw f UNIV UNIV"
-```
-

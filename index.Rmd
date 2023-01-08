@@ -1,0 +1,26 @@
+--- 
+title: "Learn Mathematics and Computer Science with Isabelle"
+author: "Aleksadner Mendoza"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+github-repo: rstudio/bookdown-demo
+description: ""
+---
+
+# Preface
+
+The goal is to develop deep understanding in mathematics while at the same time also learn Isabelle and its standard library. I couldn't find any existing resources like this so I decided to write one myself. Our goal is to first learn
+the basics of Isabelle without getting too deep into irrelevant details. Then we should move on to studying actual mathematics as quickly as possible. Any remaining details of Isabelle will be introduced as needed.
+
+We will go though all of undergradute maths courses (and touch on graduate level topics) in a rather unusual order because we will first start with the most abstract and pure fields and only later specialize to more concrete ones.
+For example we will first study topology before doing real analysis, functional analysis before linear algebra, measure theory before probability. Studying in this order will allow us to use Isabelle and make all proofs much easier. In order to keep the reader engaged and motivated, we will provide plenty of use-cases, examples and experiments (which you can run in Python) from computer science (including machine learning) to motivate the importance of presented theory.
+
+If you already know many of those branches of mathematics, this book might still be a valuable tool for learning Isabelle.
+It is a highly practical tutorial and also a good way to get deeply familiar with the standard library and complex proofs. 
+
+
