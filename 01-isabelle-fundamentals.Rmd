@@ -143,7 +143,88 @@ No subgoals!
 ```
 and we can add `done` to finish the theorem. 
 
-## More complex proofs
+### Querying and using proofs {#query-proofs}
+
+If you ever forget what the theorem states, you can use command `thm` to look it up
+
+```
+thm add_associativity
+```
+
+which prints
+
+```
+plus ?x (plus ?y ?z) = plus (plus ?x ?y) ?z
+```
+
+Isabelle has added `?` to all variables, which means that from now on you can substitute
+those variables for an arbitrary expression like this
+
+```
+theorem zero_plus_one_plus_z: "plus Zero (plus (Suc Zero)  z) = plus (plus Zero (Suc Zero)) z"
+  apply(subst add_associativity)
+  apply(rule refl)
+  done
+```
+
+The `subst` command will look for any pattern that looks like `plus ?x (plus ?y ?z)` and substitute
+it for `plus (plus ?x ?y) ?z`. In this case `?x` matches with `Zero`, `?y` matches `Suc Zero` and `?z` matches `z`.
+
+If you are curious what `refl` does you can look it up in the same way
+
+```
+thm refl
+```
+
+which prints
+
+```
+?t = ?t
+```
+
+You can hold `Ctrl` (or `Cmd` on OSX) and click on any term to go to its definition. Click on `refl`
+and you will be redirected to a file from Isabelle's `Main` library, to the exact line that defines `refl`
+
+```
+subsubsection ‹Axioms and basic definitions›
+
+axiomatization where
+  refl: "t = (t::'a)" and 
+  subst: "s = t ⟹ P s ⟹ P t" and
+  ext: "(⋀x::'a. (f x ::'b) = g x) ⟹ (λx. f x) = (λx. g x)"
+    ― ‹Extensionality is built into the meta-logic, and this rule expresses
+         a related property.  It is an eta-expanded version of the traditional
+         rule, and similar to the ABS rule of HOL› and
+
+  the_eq_trivial: "(THE x. x = a) = (a::'a)"
+```
+
+The proof of `zero_plus_one_plus_z` could be written more compactly as
+
+```
+theorem t: "plus Zero (plus (Suc Zero)  z) = plus (plus Zero (Suc Zero)) z"
+  apply(rule add_associativity)
+  done
+```
+
+Here, instead of substituting left side for the right side and then applying equality rule `refl`,
+we apply the `add_associativity` directly. If both left and right sides of equation match then it is obvious that they are equal and the proof is done.
+
+These examples show how we can use previous theorems to prove new ones. The `Main` library contains a galore of
+theorems to choose from. You can search for proofs by name
+
+
+![search](imgs/search1.png)
+or by pattern involving wildcards `_`
+
+![search](imgs/search2.png)
+
+or by pattern involving `?`-prefixed variables 
+
+![search](imgs/search3.png)
+
+
+### More complex proofs {#more-complex-proofs}
 
 Here are a few more examples of easy theorems
 
@@ -173,7 +254,7 @@ goal (2 subgoals):
  1. y = plus y Zero
  2. ⋀x. plus x y = plus y x ⟹ Suc (plus y x) = plus y (Suc x)
 ```
-We have alreayd proved the first subgoal in form of `add_zero` theorem. We can tell Isabelle to use it by using `simp add: add_zero`.
+We have already proved the first subgoal in form of `add_zero` theorem. We can tell Isabelle to use it by using `simp add: add_zero`.
 
 ```
 theorem add_commutativity : "plus x y = plus y x" 
@@ -226,7 +307,7 @@ theorem add_commutativity : "plus x y = plus y x"
 ```
 
 ### The thinking process 
-You might be wondering how I arrived at this proof. In fact, I started from the end. My initial goal was to prove `add_commutativity` but I coudln't. Whenever you're stuck in Isabelle, it's always a good idea to backtrack and try to prove something simpler first. I tried proving all the smaller auxiliary theorems like `add_suc_out` first. Even those were difficult because initially my definition of `plus` looked like this
+You might be wondering how I arrived at this proof. In fact, I started from the end. My initial goal was to prove `add_commutativity` but I couldn't. Whenever you're stuck in Isabelle, it's always a good idea to backtrack and try to prove something simpler first. I tried proving all the smaller auxiliary theorems like `add_suc_out` first. Even those were difficult because initially my definition of `plus` looked like this
 
 ```
 primrec plus :: "nat ⇒ nat ⇒ nat" where
@@ -272,7 +353,7 @@ fun is_even :: "nat ⇒ bool" where
 
 Now calling `is_even (Suc (Suc Zero))` is equivalent to looking up a hash-map in Python `is_even[2]` but we are no longer limited to finite sets. Notice that we had to use `fun` because `primrec` does not allow nested patterns `is_even (Suc(Suc n))` on the left. We will investigate `fun` in depth later.
 
-So functions are like infinite hash-maps. What about lists? We could imagine that their infinite analogue are `inductive` predicates
+If functions are like infinite hash-maps then `inductive` predicates
 
 ```
 inductive Even :: "nat ⇒ bool" where
@@ -280,7 +361,10 @@ zero: "Even Zero"
 | double: "Even (Suc (Suc n))" if "Even n" for n
 ```
 
-While `is_even` returns `True` on numbers that are even and `False` on those that aren't, the `inductive` predicate `Even` can be proved to hold for even numbers but cannot be proved to hold for anything else. By analogy a list only contains elements that belong to it whereas a hash-map must also hold odd numbers (and mark them as `False`).
+are like infinite linked lists.
+
+While `is_even` returns `True` on numbers that are even and `False` on those that aren't, the `inductive` predicate `Even` can be proved to hold for even numbers but cannot be proved to hold for anything else. By analogy a list only contains elements that belong to it whereas a hash-map must also hold odd numbers and mark them as `False`.
+Note one interesting difference between finite and infinite data structures. If you try to iterate over an entire linked-list or hash-map you will eventually reach the end. By exploiting this fact, you don't need to store `False` entries in a hash-map but this cannot be done with infinite structures. For this reason mathematicians refer to finite structures as [effective](https://en.wikipedia.org/wiki/Effective_method). 
 
 To prove that `4` is even we can proceed as follows
 
@@ -319,7 +403,7 @@ In some cases it is impossible to give recursive definitions. In particular thos
 
 ## Type declarations and axiomatization 
 
-### Sets
+### Sets {#set-def}
 
 We can declare a new type without providing any definition. This is done with `typedecl` keyword. Of course such types are not very useful on their own so they are typically combined with some `axiomatization`. For example the following is how Isabelle defines sets
 
@@ -392,7 +476,7 @@ typedef nat = "{n. Nat n}"
 Infinite numbers, known as [ordinals](https://en.wikipedia.org/wiki/Ordinal_number), will be covered later. The meaning of `morphisms` will be explained soon but it's not important at this point.
 
 
-### All types are inhabited
+### All types are inhabited {#undefined}
 
 Another important example of an axiom is
 
@@ -538,7 +622,7 @@ y = y ≡ True
 
 Meta equality is also used for term substitution and rewriting.
 
-## Abstraction and representation
+## Abstraction and representation {#abstraction-and-representation}
 
 Recall that when defining `nat` [here](#ordinals) 
 
@@ -710,7 +794,7 @@ value "[x,y] @ [z,w]"
 *)
 ```
 
-## Type classes and semigroups
+## Type classes and semigroups {#type-classes}
 
 ### List and nat are semigroups
 
@@ -941,7 +1025,7 @@ Abs_int (2,3) = -1
 
 But we already said that abstraction and representation functions are inverse of one another. So the `Rep_int :: int => nat × nat` function is in fact not a function at all because it maps  one `int` to infinitely many possible `nat × nat` pairs. This cannot be done with `typedef`! Instead we need to take advantage of equivalence classes.
 
-### Equivalence classes
+### Equivalence classes {#equiv-class}
 
 A relation `R :: 'a => 'a => bool` is called equivalence relation  if it satisfies 3 ("class") axioms
 
@@ -1072,3 +1156,4 @@ lift_definition plus_int :: "int ⇒ int ⇒ int"
   is "λ(x, y) (u, v). (x + u, y + v)"
   by clarsimp
 ```
+

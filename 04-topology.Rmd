@@ -1,0 +1,496 @@
+# Topology
+
+We have studied most of basic features of Isabelle and plenty fundamental definitions from `Main` library. 
+We are finally ready for more "mathy" topics. 
+Typically topology can be studied with the excellent book "Topology without tears" by Sydney A. Morris (which can be downloaded for free [here](https://www.topologywithouttears.net/)). Our treatment of the subject will try to follow that book as much as possible.
+
+
+## Motivation and the big idea
+
+What is topology and why do you need it?
+The goal of topology is to generalize the definition of a continuity.
+The most well known example of continuous functions are real functions 
+whose limit approaches the function value `y` at any given point `x`.
+Intuitively we think of continuous functions as any functions whose graph you can draw
+without taking the pen off the paper. The problem with relying on intuition is that here any many 
+functions that look continuous but aren't. For example `sin(1/x)` is not continuous
+while [weierstrass function](https://en.wikipedia.org/wiki/Weierstrass_function) is.
+
+
+For us topology is an important tool that will make
+real analysis much easier to work with in Isabelle.
+We will also see that continuity arises in many places where 
+we wouldn't expect it. For example it is possible to take
+[derivatives of types](https://codewords.recurse.com/issues/three/algebra-and-calculus-of-algebraic-data-types).
+
+
+The main idea is to observe that if function is 
+
+## Topological spaces
+
+### Topology
+
+We define topological space as a type `'a` (or meta set \@ref(abstraction-and-representation)) equipped with `open` predicate that tells us whether any `'a set` (subset of `'a`) is *open*. The term *open set* was invented as a generalization of [open intervals](https://en.wikipedia.org/wiki/Interval_(mathematics)). In the space (a.k.a type) of real numbers (`'a=real`) all sets of the form `(a,b)={x∈ℝ | a < x < b}` are open intervals.
+<details>
+  <summary>Note</summary>
+  Brackets `(a,b)={x∈ℝ | a < x < b}` are a mathematical notation of open intervals. Actual Isabelle notation would be 
+```
+definition greaterThanLessThan :: "'a => 'a => 'a set"  ("(1{_<..<_})") where
+  "{l<..<u} == {l<..} Int {..<u}"
+
+```
+  defined in [Set_Interval](https://isabelle.in.tum.de/library/HOL/HOL/Set_Interval.html) and [Real](https://isabelle.in.tum.de/library/HOL/HOL/Real.html). You need to import them if you want to experiment
+```
+theory Test
+  imports Main HOL.Real 
+begin
+value "x::real" (* "x" *)
+value "{2..(4::nat)}" (* "{2, 3, 4}" *)
+value "{2..(4::real)}" (* error! *)
+end
+```
+To see why the error in last `value`, check out the hidden note under \@ref(instantiating-lattice-on-bool).  
+</details>
+ In general `'a` open sets could be anything (for example sets of infinite strings with common prefixes are open in [Martin-Löf–Chaitin randomness](https://en.wikipedia.org/wiki/Algorithmically_random_sequence) which is the foundation of information theory and [Kolmogorov complexity](https://en.wikipedia.org/wiki/Kolmogorov_complexity)).
+
+
+
+Topological space also has three axioms.
+```
+class "open" =
+  fixes "open" :: "'a set ⇒ bool"
+  
+class topological_space = "open" +
+  assumes open_UNIV [simp, intro]: "open UNIV"
+  assumes open_Int [intro]: "open S ⟹ open T ⟹ open (S ∩ T)"
+  assumes open_Union [intro]: "∀S∈K. open S ⟹ open (⋃K)"
+```
+
+In topology textbooks you will see the symbol τ (tau) denoting `τ={S . open S}` the set of open sets and notation *S ∈ τ* instead of `open S`.
+Typically a mathematician would say that `UNIV` and `{}` must be open but in Isabelle we have `open_UNIV` axiom
+which only says that `UNIV` is open. The openness of `{}` follows from axiom `open_Union` when `K={}`.
+
+```
+lemma open_empty [continuous_intros, intro, simp]: "open {}"
+  using open_Union [of "{}"] by simp
+```
+
+<details>
+<summary>More detailed proof</summary>
+
+The notation `open_Union [of "{}"]` is equivalent to creating a new auxiliary lemma `open_Union_trivial`.
+```
+lemma (in topological_space) open_Union_trivial: "∀S∈{}. open S ⟹ open {}"
+  apply(simp)
+  done
+lemma (in topological_space) open_empty : "open {}" 
+  apply(rule open_Union_trivial) (* goal becomes:  "Ball {} open" *)
+  apply(rule ballI) (* new goal: "⋀S. S ∈ {} ⟹ open S" *)
+  apply(simp)
+  done
+```
+We added `(in topological_space)` because this proof (and many of other below) only holds in the context of this type class. You can also use `context` keyword (\@ref(lattices-in-isabelle)).
+
+</details>
+The notation `⋃K` stands for an infinite union of all sets `S` 
+that are members of `K`. The axiom `open_Union` states that if all sets `S` are open (`∀S∈K. open S`)
+then their union must be open too (`open (⋃K)"`).
+
+If we can take unions over infinite sets, then clearly we can
+take finite unions.
+```
+lemma open_Un [continuous_intros, intro]: "open S ⟹ open T ⟹ open (S ∪ T)"
+  using open_Union [of "{S, T}"] by simp
+```
+
+The axiom `open_Int` only allows us to take intersections of two open sets. This means 
+that we can take intersections over `finite` sets.
+
+```
+lemma open_Inter [continuous_intros, intro]: "finite S ⟹ ∀T∈S. open T ⟹ open (⋂S)"
+  by (induction set: finite) auto
+```
+
+An infinite intersection of open sets is **not** guaranteed to be open.
+
+If for all `x ∈ S` there exists some open subset `T ⊆ S` containing `x ∈ T` then `S` must be open.
+
+```
+lemma openI:
+  assumes "⋀x. x ∈ S ⟹ ∃T. open T ∧ x ∈ T ∧ T ⊆ S"
+  shows "open S"
+proof -
+  have "open (⋃{T. open T ∧ T ⊆ S})" by auto
+  moreover have "⋃{T. open T ∧ T ⊆ S} = S" by (auto dest!: assms)
+  ultimately show "open S" by simp
+qed
+```
+
+This holds true because we could take union of all `T`s. The union of `T`s must be open and equal `S`.
+Therefore `S` must be open.
+
+#### Discrete topology
+
+
+
+Discrete topology is a special case of topological space in which all subsets `'a set` are open
+
+```
+class discrete_topology = topological_space +
+  assumes open_discrete: "⋀A. open A"
+```
+
+<details>
+<summary> Mind the context! </summary>
+While all the theorems above live in 
+```
+context topological_space
+begin
+...
+end
+```
+discrete topology is defined outside of it.
+</details>
+
+Try to prove that if all singleton sets are open then the space is discrete
+
+```
+lemma (in topological_space) singl_open_discr : "∀ x::'a . open {x} ⟹ ∀s::'a set . open s"
+```
+
+
+
+### Open, closed, clopen sets
+
+We define a set to be `closed` if and only if (`⟷`) its complement (`-S`) is open
+
+```
+definition closed :: "'a set ⇒ bool"
+  where "closed S ⟷ open (- S)"
+```
+
+<details>
+<summary> Mind the context! </summary>
+All theorems in this section as well as definition of `closed` live in 
+`topological_space` context.
+```
+context topological_space
+begin
+...
+end
+```
+</details>
+
+The empty `{}` and full `UNIV` sets are closed
+
+```
+lemma closed_empty [continuous_intros, intro, simp]: "closed {}"
+  unfolding closed_def by simp
+  
+lemma closed_UNIV [continuous_intros, intro, simp]: "closed UNIV"
+  unfolding closed_def by simp
+```
+
+Sets that are both closed and open are called *clopen* 
+<details>
+  <summary>Note</summary>
+By finding clopen sets it is possible
+to detect disconnected components, which you can intuitively think of like "cracks" in the space. 
+If `{}` and `UNIV` are the only clopen sets, then there are no "cracks".
+</details>
+
+A union and intersection of closed sets is closed
+
+```
+lemma closed_Un [continuous_intros, intro]: "closed S ⟹ closed T ⟹ closed (S ∪ T)"
+  unfolding closed_def by auto
+
+lemma closed_Int [continuous_intros, intro]: "closed S ⟹ closed T ⟹ closed (S ∩ T)"
+  unfolding closed_def by auto
+```
+
+Infinite intersection is closed too
+
+```
+lemma closed_Inter [continuous_intros, intro]: "∀S∈K. closed S ⟹ closed (⋂K)"
+  unfolding closed_def uminus_Inf by auto
+```
+
+You may notice at this point that everything that holds for open sets should
+also hold for closed sets after swapping unions with intersections. This simply follows
+from [De Morgan's law](https://en.wikipedia.org/wiki/De_Morgan%27s_laws).
+
+Difference of open and closed set is open
+
+```
+lemma open_Diff [continuous_intros, intro]: "open S ⟹ closed T ⟹ open (S - T)"
+  by (simp add: closed_open Diff_eq open_Int)
+
+lemma closed_Diff [continuous_intros, intro]: "closed S ⟹ open T ⟹ closed (S - T)"
+  by (simp add: open_closed Diff_eq closed_Int)
+```
+
+### Injection, surjection, bijection
+
+We define function images and ranges before (\@ref(operations-on-sets)). Now 
+we need to introduce injective, surjective and bijective functions.
+
+```
+definition inj_on :: "('a ⇒ 'b) ⇒ 'a set ⇒ bool"  ― ‹injective›
+  where "inj_on f A ⟷ (∀x∈A. ∀y∈A. f x = f y ⟶ x = y)"
+```
+
+The definition `inj_on` states that some function `f :: 'a ⇒ 'b`
+with domain `A::'a set` is [injective](https://en.wikipedia.org/wiki/Injective_function) 
+if and only if (`⟷`) the outputs `f x` and `f y` are equal only when inputs `x` and `y` are equal 
+(or more intuitively - every element `x∈A` is mapped to a different output `f x`).
+Actually `f`'s domain is the whole set `'a` 
+but `inj_on` only considers injectivity `f` when domain is restricted to the subset `A`.
+For example
+
+```
+value "inj_on (λ x::bool . True) {True}" (* yields "True" *)
+value "inj_on (λ x::bool . True) {False}" (* yields "True" *) 
+value "inj_on (λ x::bool . True) {False, True}" (* yields "False" *)
+```
+
+Surjectivity is expressed as ``f ` A = B``, which means that every element `y∈B`
+has some corresponding input `x∈A` that produces it (`f x = y`). Recall (\@ref(operations-on-sets)) that this
+is in fact the definition of `image`.
+
+```
+definition image :: "('a ⇒ 'b) ⇒ 'a set ⇒ 'b set"    (infixr "`" 90)
+  where "f ` A = {y. ∃x∈A. y = f x}"
+```
+
+Two functions are bijective if they are both injective and surjective at the same time
+
+```
+definition bij_betw :: "('a ⇒ 'b) ⇒ 'a set ⇒ 'b set ⇒ bool"  ― ‹bijective›
+  where "bij_betw f A B ⟷ inj_on f A ∧ f ` A = B"
+```
+
+Very commonly we are interested in studying these properties on the entire set `'a`
+rather than some subset `A`. Therefore Isabelle defines abbreviations.
+
+```
+abbreviation inj :: "('a ⇒ 'b) ⇒ bool"
+  where "inj f ≡ inj_on f UNIV"
+
+abbreviation surj :: "('a ⇒ 'b) ⇒ bool"
+  where "surj f ≡ range f = UNIV"
+
+abbreviation bij :: "('a ⇒ 'b) ⇒ bool"
+  where "bij f ≡ bij_betw f UNIV UNIV"
+```
+
+Bijectivity means that there is one-to-one correspondence between elements of `A` and `B`.
+This is capture by this lemma.
+
+```
+lemma bij_pointE:
+  assumes "bij f"
+  obtains x where "y = f x" and "⋀x'. y = f x' ⟹ x' = x"
+proof -
+  from assms have "inj f" by (rule bij_is_inj)
+  moreover from assms have "surj f" by (rule bij_is_surj)
+  then have "y ∈ range f" by simp
+  ultimately have "∃!x. y = f x" by (simp add: range_ex1_eq)
+  with that show thesis by blast
+qed
+```
+
+This proof is a great example of the power of `proof`...`qed`. It relies
+on several other lemmas defined in `Main`. We won't go through them as it is
+not necessary to memorize entirety of `Main` (good skills in using search tab are enough).
+The keyword `obtains` means that we can always find an `x` that fulfills some 
+requirements `where`. In this case for every `y` there exists some `x` that yields `y = f x`  
+and there is no other `x'` is produces `y`. You may observe that `obtains` 
+corresponds to existential quantifier, while `fixes` corresponds to universal.
+
+In topology especially important is the concept of inverse images which are sets
+of all inputs `x` that yield output in some set `B`
+
+```
+definition vimage :: "('a ⇒ 'b) ⇒ 'b set ⇒ 'a set"  (infixr "-`" 90)
+  where "f -` B ≡ {x. f x ∈ B}"
+```
+
+In Isabelle inverse function is defined using Hilbert's epsilon operator `SOME`
+
+```
+definition inv_into :: "'a set ⇒ ('a ⇒ 'b) ⇒ ('b ⇒ 'a)" where
+"inv_into A f = (λx. SOME y. y ∈ A ∧ f y = x)"
+
+lemma inv_into_def2: "inv_into A f x = (SOME y. y ∈ A ∧ f y = x)"
+by(simp add: inv_into_def)
+
+abbreviation inv :: "('a ⇒ 'b) ⇒ ('b ⇒ 'a)" where
+"inv ≡ inv_into UNIV"
+```
+
+This means that for every function `f :: 'a ⇒ 'b` we can produce its inverse function
+`inv f :: 'b ⇒ 'a`
+by arbitrarily choosing `SOME` element `y::'a` that maps `f y = x`. Once we choose `y` for a specific `x` then we have to stay consistent. We can't choose different `y` each time we use `(inv f) x`. 
+Moreover if there does not exist any `y` that fulfills property `y ∈ A ∧ f y = x` then an arbitrary `y::'a` will be chosen (which must exist because all types are inhabited \@ref(undefined)).
+There may be many different ways to choose `y` and therefore there may be many different candidate functions for an inverse `inv f`.
+We don't know which one of them will be picked by Isabelle (in fact Isabelle doesn't "physically" pick any). Proofs of any theorem involving `inv f` must work for all possible choices of `inv f`. Due to this it is generally
+difficult to reason about `inv f`. Mathematicians don't like it and they would typically say that inverse functions don't exist unless `f` is bijective. Then `inv f` is unique. For each `x` there is only one `y` that can be chosen by `SOME y`.
+
+Bijections have the following special properties. 
+Inverse of inverse is the [identity function](https://en.wikipedia.org/wiki/Identity_function).
+
+```
+lemma inv_inv_eq: "bij f ⟹ inv (inv f) = f"
+  by (rule inv_equality) (auto simp add: bij_def surj_f_inv_f)
+```
+
+The inverse image of `f` is equal to the image of inverse `inf v`. 
+
+```
+lemma bij_vimage_eq_inv_image:
+  assumes "bij f"
+  shows "f -` A = inv f ` A"
+proof
+  show "f -` A ⊆ inv f ` A"
+    using assms by (blast intro: bij_is_inj [THEN inv_into_f_f, symmetric])
+  show "inv f ` A ⊆ f -` A"
+    using assms by (auto simp add: bij_is_surj [THEN surj_f_inv_f])
+qed
+```
+
+### Basis
+
+Topological space can be generated by a basis `S` which is a set of subsets `'a set set`.
+
+```
+inductive generate_topology :: "'a set set ⇒ 'a set ⇒ bool" for S :: "'a set set"
+  where
+    UNIV: "generate_topology S UNIV"
+  | Int: "generate_topology S (a ∩ b)" if "generate_topology S a" and "generate_topology S b"
+  | UN: "generate_topology S (⋃K)" if "(⋀k. k ∈ K ⟹ generate_topology S k)"
+  | Basis: "generate_topology S s" if "s ∈ S"
+```
+
+Defining `open = generate_topology B` would mean that open sets are inductively defined, that is,
+all sets in `B` are open (`Basis`) and `UNIV` is open and any union ('UN') and intersection ('Int') of open sets is open. The proof that `generate_topology` indeed yields a topological space is given as follows.
+
+```
+lemma topological_space_generate_topology: "class.topological_space (generate_topology S)"
+  by standard (auto intro: generate_topology.intros)
+```
+
+An example of generated topology is the `order_topology` in the next section.
+
+## Euclidean Topology
+
+### Order topology
+
+Every set equipped with `order` (\@ref(order-type-classes)) can be easily turned into a topological space
+by assuming `open_generated_order`.
+
+```
+class order_topology = order + "open" +
+  assumes open_generated_order: "open = generate_topology (range (λa. {..< a}) ∪ range (λa. {a <..}))"
+```
+
+This is sometimes called a [natural topology](https://en.wikipedia.org/wiki/Natural_topology). On a real line,
+this would mean that all half-open intervals are open sets and any union or intersection of open intervals is an open set too. This includes all open intervals because an intersection of two half-open intervals `{..< a}` and `{b <..}` yields an open interval `{b <..< a}`.
+<details>
+<summary>Recall the meaning of this notation</summary>
+
+```
+definition lessThan    :: "'a => 'a set" ("(1{..<_})") where
+  "{..<u} == {x. x < u}"
+
+definition atMost      :: "'a => 'a set" ("(1{.._})") where
+  "{..u} == {x. x ≤ u}"
+
+definition greaterThan :: "'a => 'a set" ("(1{_<..})") where
+  "{l<..} == {x. l<x}"
+
+definition atLeast     :: "'a => 'a set" ("(1{_..})") where
+  "{l..} == {x. l≤x}"
+  
+definition greaterThanLessThan :: "'a => 'a => 'a set"  ("(1{_<..<_})") where
+  "{l<..<u} == {l<..} Int {..<u}"
+
+definition atLeastLessThan :: "'a => 'a => 'a set"      ("(1{_..<_})") where
+  "{l..<u} == {l..} Int {..<u}"
+
+definition greaterThanAtMost :: "'a => 'a => 'a set"    ("(1{_<.._})") where
+  "{l<..u} == {l<..} Int {..u}"
+
+definition atLeastAtMost :: "'a => 'a => 'a set"        ("(1{_.._})") where
+  "{l..u} == {l..} Int {..u}"
+```
+</details>
+
+We can use `subclass` keyword to tell Isabelle that every `order_topology` is a `topological_space`
+
+```
+class order_topology = order + "open" +
+  assumes open_generated_order: "open = generate_topology (range (λa. {..< a}) ∪ range (λa. {a <..}))"
+begin
+
+subclass topological_space
+  unfolding open_generated_order
+  by (rule topological_space_generate_topology)
+  
+end
+```
+
+
+The simplest example of topological space is `bool` which is also a discrete topology
+
+```
+class discrete_topology = topological_space +
+  assumes open_discrete: "⋀A. open A"
+
+instance discrete_topology < t2_space
+proof
+  fix x y :: 'a
+  assume "x ≠ y"
+  then show "∃U V. open U ∧ open V ∧ x ∈ U ∧ y ∈ V ∧ U ∩ V = {}"
+    by (intro exI[of _ "{_}"]) (auto intro!: open_discrete)
+qed
+
+instantiation bool :: linorder_topology
+begin
+```
+
+A notable special case of `order_topology` is
+
+```
+class linorder_topology = linorder + order_topology
+```
+
+In `linorder_topology` the intervals `{..< a}` and `{a <..}` really are intervals. 
+In `order_topology` with partial order, the sets `{a <..< b}` may instead look like [convex sublattices](https://en.wikipedia.org/wiki/Lattice_(order)) (when the topological space is also a lattice \@ref(lattices)).
+
+### T0, T1 and T2 spaces
+
+Topological spaces only tell us what operations can be performed on open sets but there are no axioms that 
+would say anything about individual elements of those sets. Therefore, to obtain more interesting
+properties it is necessary to include additional axioms relating elements and sets. These are called
+*separation axioms*. 
+
+The first one says that for any two distinct points `x` and `y` there
+exists an open set containing one but not the other.
+
+```
+class t0_space = topological_space +
+  assumes t0_space: "x ≠ y ⟹ ∃U. open U ∧ ¬ (x ∈ U ⟷ y ∈ U)"
+```
+
+This means that all points can be topologically "distinguished" from one another.
+Intuitively you may think of it as if there were two points so close to each other that they seem to overlap but if you zoom in close enough then you will eventually spot two distinguished points.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/jg91ikK0OCI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+ 
+Spaces that satisfy this axiom are called *T0* spaces. 
+
+
+
+
