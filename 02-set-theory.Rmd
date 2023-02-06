@@ -1,0 +1,7 @@
+
+# Set theory
+
+The very basics of set theory have already been covered. The definition of `set` was in \@ref(set-def),
+`undefined` in \@ref(undefined), equivalence classes in \@ref(equiv-class), order in \@ref(order-type-classes),
+lattices in \@ref(lattices-in-isabelle), Boolean algebra in \@ref(bool-algebra) and some basic properties of `set` in \@ref(main-sets).
+

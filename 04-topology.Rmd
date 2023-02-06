@@ -1,8 +1,9 @@
 # Topology
 
-We have studied most of basic features of Isabelle and plenty fundamental definitions from `Main` library. 
-We are finally ready for more "mathy" topics. 
-Typically topology can be studied with the excellent book "Topology without tears" by Sydney A. Morris (which can be downloaded for free [here](https://www.topologywithouttears.net/)). Our treatment of the subject will try to follow that book as much as possible.
+This chapter follows the book [Topology without tears by Sydney A. Morris](https://www.topologywithouttears.net/). It builds upon and extends the
+formalism in
+[Grothendieck's Schemes in Algebraic Geometry](https://www.isa-afp.org/entries/Grothendieck_Schemes.html#), which in turn builds upon [A Case Study in Basic Algebra](https://www.isa-afp.org/entries/Jacobson_Basic_Algebra.html). You can import it from AFP (see \@ref(afp))
+
 
 
 ## Motivation and the big idea
@@ -26,9 +27,16 @@ we wouldn't expect it. For example it is possible to take
 
 The main idea is to observe that if function is 
 
+TODO: add visual intuition behind continuity expressed with open sets/neighborhoods/filters.
+
+Topology is one of the paths to mathematical analysis. There is also an alternative path that
+uses abstract algebra. This is nicely summarized by Isabelle's type class hierarchy (graphic comes from [this paper](https://www.cs.vu.nl/~jhl890/pub/hoelzl2013typeclasses.pdf))
+
+![](imgs/type_class_hierarchy.png)
+
 ## Topological spaces
 
-### Topology
+### Topology {#topological-space-def}
 
 We define topological space as a type `'a` (or meta set \@ref(abstraction-and-representation)) equipped with `open` predicate that tells us whether any `'a set` (subset of `'a`) is *open*. The term *open set* was invented as a generalization of [open intervals](https://en.wikipedia.org/wiki/Interval_(mathematics)). In the space (a.k.a type) of real numbers (`'a=real`) all sets of the form `(a,b)={x∈ℝ | a < x < b}` are open intervals.
 <details>
@@ -230,134 +238,6 @@ lemma closed_Diff [continuous_intros, intro]: "closed S ⟹ open T ⟹ closed (S
   by (simp add: open_closed Diff_eq closed_Int)
 ```
 
-### Injection, surjection, bijection
-
-We define function images and ranges before (\@ref(operations-on-sets)). Now 
-we need to introduce injective, surjective and bijective functions.
-
-```
-definition inj_on :: "('a ⇒ 'b) ⇒ 'a set ⇒ bool"  ― ‹injective›
-  where "inj_on f A ⟷ (∀x∈A. ∀y∈A. f x = f y ⟶ x = y)"
-```
-
-The definition `inj_on` states that some function `f :: 'a ⇒ 'b`
-with domain `A::'a set` is [injective](https://en.wikipedia.org/wiki/Injective_function) 
-if and only if (`⟷`) the outputs `f x` and `f y` are equal only when inputs `x` and `y` are equal 
-(or more intuitively - every element `x∈A` is mapped to a different output `f x`).
-Actually `f`'s domain is the whole set `'a` 
-but `inj_on` only considers injectivity `f` when domain is restricted to the subset `A`.
-For example
-
-```
-value "inj_on (λ x::bool . True) {True}" (* yields "True" *)
-value "inj_on (λ x::bool . True) {False}" (* yields "True" *) 
-value "inj_on (λ x::bool . True) {False, True}" (* yields "False" *)
-```
-
-Surjectivity is expressed as ``f ` A = B``, which means that every element `y∈B`
-has some corresponding input `x∈A` that produces it (`f x = y`). Recall (\@ref(operations-on-sets)) that this
-is in fact the definition of `image`.
-
-```
-definition image :: "('a ⇒ 'b) ⇒ 'a set ⇒ 'b set"    (infixr "`" 90)
-  where "f ` A = {y. ∃x∈A. y = f x}"
-```
-
-Two functions are bijective if they are both injective and surjective at the same time
-
-```
-definition bij_betw :: "('a ⇒ 'b) ⇒ 'a set ⇒ 'b set ⇒ bool"  ― ‹bijective›
-  where "bij_betw f A B ⟷ inj_on f A ∧ f ` A = B"
-```
-
-Very commonly we are interested in studying these properties on the entire set `'a`
-rather than some subset `A`. Therefore Isabelle defines abbreviations.
-
-```
-abbreviation inj :: "('a ⇒ 'b) ⇒ bool"
-  where "inj f ≡ inj_on f UNIV"
-
-abbreviation surj :: "('a ⇒ 'b) ⇒ bool"
-  where "surj f ≡ range f = UNIV"
-
-abbreviation bij :: "('a ⇒ 'b) ⇒ bool"
-  where "bij f ≡ bij_betw f UNIV UNIV"
-```
-
-Bijectivity means that there is one-to-one correspondence between elements of `A` and `B`.
-This is capture by this lemma.
-
-```
-lemma bij_pointE:
-  assumes "bij f"
-  obtains x where "y = f x" and "⋀x'. y = f x' ⟹ x' = x"
-proof -
-  from assms have "inj f" by (rule bij_is_inj)
-  moreover from assms have "surj f" by (rule bij_is_surj)
-  then have "y ∈ range f" by simp
-  ultimately have "∃!x. y = f x" by (simp add: range_ex1_eq)
-  with that show thesis by blast
-qed
-```
-
-This proof is a great example of the power of `proof`...`qed`. It relies
-on several other lemmas defined in `Main`. We won't go through them as it is
-not necessary to memorize entirety of `Main` (good skills in using search tab are enough).
-The keyword `obtains` means that we can always find an `x` that fulfills some 
-requirements `where`. In this case for every `y` there exists some `x` that yields `y = f x`  
-and there is no other `x'` is produces `y`. You may observe that `obtains` 
-corresponds to existential quantifier, while `fixes` corresponds to universal.
-
-In topology especially important is the concept of inverse images which are sets
-of all inputs `x` that yield output in some set `B`
-
-```
-definition vimage :: "('a ⇒ 'b) ⇒ 'b set ⇒ 'a set"  (infixr "-`" 90)
-  where "f -` B ≡ {x. f x ∈ B}"
-```
-
-In Isabelle inverse function is defined using Hilbert's epsilon operator `SOME`
-
-```
-definition inv_into :: "'a set ⇒ ('a ⇒ 'b) ⇒ ('b ⇒ 'a)" where
-"inv_into A f = (λx. SOME y. y ∈ A ∧ f y = x)"
-
-lemma inv_into_def2: "inv_into A f x = (SOME y. y ∈ A ∧ f y = x)"
-by(simp add: inv_into_def)
-
-abbreviation inv :: "('a ⇒ 'b) ⇒ ('b ⇒ 'a)" where
-"inv ≡ inv_into UNIV"
-```
-
-This means that for every function `f :: 'a ⇒ 'b` we can produce its inverse function
-`inv f :: 'b ⇒ 'a`
-by arbitrarily choosing `SOME` element `y::'a` that maps `f y = x`. Once we choose `y` for a specific `x` then we have to stay consistent. We can't choose different `y` each time we use `(inv f) x`. 
-Moreover if there does not exist any `y` that fulfills property `y ∈ A ∧ f y = x` then an arbitrary `y::'a` will be chosen (which must exist because all types are inhabited \@ref(undefined)).
-There may be many different ways to choose `y` and therefore there may be many different candidate functions for an inverse `inv f`.
-We don't know which one of them will be picked by Isabelle (in fact Isabelle doesn't "physically" pick any). Proofs of any theorem involving `inv f` must work for all possible choices of `inv f`. Due to this it is generally
-difficult to reason about `inv f`. Mathematicians don't like it and they would typically say that inverse functions don't exist unless `f` is bijective. Then `inv f` is unique. For each `x` there is only one `y` that can be chosen by `SOME y`.
-
-Bijections have the following special properties. 
-Inverse of inverse is the [identity function](https://en.wikipedia.org/wiki/Identity_function).
-
-```
-lemma inv_inv_eq: "bij f ⟹ inv (inv f) = f"
-  by (rule inv_equality) (auto simp add: bij_def surj_f_inv_f)
-```
-
-The inverse image of `f` is equal to the image of inverse `inf v`. 
-
-```
-lemma bij_vimage_eq_inv_image:
-  assumes "bij f"
-  shows "f -` A = inv f ` A"
-proof
-  show "f -` A ⊆ inv f ` A"
-    using assms by (blast intro: bij_is_inj [THEN inv_into_f_f, symmetric])
-  show "inv f ` A ⊆ f -` A"
-    using assms by (auto simp add: bij_is_surj [THEN surj_f_inv_f])
-qed
-```
 
 ### Basis
 
@@ -382,7 +262,7 @@ lemma topological_space_generate_topology: "class.topological_space (generate_to
 
 An example of generated topology is the `order_topology` in the next section.
 
-## Euclidean Topology
+## Order and separation
 
 ### Order topology
 
@@ -483,13 +363,274 @@ class t0_space = topological_space +
   assumes t0_space: "x ≠ y ⟹ ∃U. open U ∧ ¬ (x ∈ U ⟷ y ∈ U)"
 ```
 
-This means that all points can be topologically "distinguished" from one another.
-Intuitively you may think of it as if there were two points so close to each other that they seem to overlap but if you zoom in close enough then you will eventually spot two distinguished points.
+This means that all points can be [topologically distinguishable](https://en.wikipedia.org/wiki/Topological_indistinguishability) from one another.
+Intuitively you may think of it as if there were two points so close to each other that they seem to overlap but if you zoom in close enough then you will eventually spot two distinguished points. In spaces that are not `t0_space` you might zoom-in forever and the points would always "overlap" (at least from topological point of view).     
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/jg91ikK0OCI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
  
-Spaces that satisfy this axiom are called *T0* spaces. 
+Spaces that satisfy this axiom are called *T0 spaces* or *Kolmogorov spaces*. 
+
+The next axiom characterizes  *T1* spaces
+
+```
+class t1_space = topological_space +
+  assumes t1_space: "x ≠ y ⟹ ∃U. open U ∧ x ∈ U ∧ y ∉ U"
+```
+
+This axiom is nearly identical to T0 but now there must exist one open set containing `x` but not `y` **and** another one containing `y` but not `x` (if you replaced **and** with **or** then this would be the T0 axiom). Every T1 space is T0 but not every T0 is T1.
+
+```
+instance t1_space ⊆ t0_space (* every T1 space is T0 *)
+  by standard (fast dest: t1_space)
+```
+
+The T1 spaces guarantee that every singleton set `{x}` must be closed because you can take the union of all
+open sets not containing point `x`.
+
+```
+
+context t1_space begin
+
+lemma separation_t1: "x ≠ y ⟷ (∃U. open U ∧ x ∈ U ∧ y ∉ U)"
+  using t1_space[of x y] by blast
+
+lemma closed_singleton [iff]: "closed {a}"
+proof -
+  let ?T = "⋃{S. open S ∧ a ∉ S}"
+  have "open ?T"
+    by (simp add: open_Union)
+  also have "?T = - {a}"
+    by (auto simp add: set_eq_iff separation_t1)
+  finally show "closed {a}"
+    by (simp only: closed_def)
+qed
+
+end
+```
+
+The axioms of T1 and T0 spaces are rather weak. It is at T2 where things start to get interesting.
+
+```
+class t2_space = topological_space +
+  assumes hausdorff: "x ≠ y ⟹ ∃U V. open U ∧ open V ∧ x ∈ U ∧ y ∈ V ∧ U ∩ V = {}"
+```
+
+This axiom is similar to T1 but it additionally guarantees that the two open sets are disjoint. 
+T2 spaces are commonly called *Hausdorff*. Every Hausdorff space is a T1 space.
+
+```
+instance t2_space ⊆ t1_space
+  by standard (fast dest: hausdorff)
+
+lemma (in t2_space) separation_t2: "x ≠ y ⟷ (∃U V. open U ∧ open V ∧ x ∈ U ∧ y ∈ V ∧ U ∩ V = {})"
+  using hausdorff [of x y] by blast
+
+lemma (in t0_space) separation_t0: "x ≠ y ⟷ (∃U. open U ∧ ¬ (x ∈ U ⟷ y ∈ U))"
+  using t0_space [of x y] by blast
+```
+
+
+Observe that every discrete topology is T2.
+
+```
+instance discrete_topology < t2_space
+proof
+  fix x y :: 'a
+  assume "x ≠ y"
+  then show "∃U V. open U ∧ open V ∧ x ∈ U ∧ y ∈ V ∧ U ∩ V = {}"
+    by (intro exI[of _ "{_}"]) (auto intro!: open_discrete)
+qed
+```
+
+
+### Linear order and separation axioms
+
+We can find many interesting relations between topologies with total order (`linorder_topology`) and the separation axioms that they satisfy.
+First notice that these closed intervals are indeed closed sets.
+
+```
+
+lemma closed_atMost [continuous_intros, simp]: "closed {..a}"
+  for a :: "'a::linorder_topology"
+  by (simp add: closed_open)
+
+lemma closed_atLeast [continuous_intros, simp]: "closed {a..}"
+  for a :: "'a::linorder_topology"
+  by (simp add: closed_open)
+
+lemma closed_atLeastAtMost [continuous_intros, simp]: "closed {a..b}"
+  for a b :: "'a::linorder_topology"
+proof -
+  have "{a .. b} = {a ..} ∩ {.. b}"
+    by auto
+  then show ?thesis
+    by (simp add: closed_Int)
+qed
+```
+
+This is because the complement of `{a .. }` is an open interval `{..< a}` and recall that `order_topology` is generated by
+
+```
+open = generate_topology (range (λa. {..< a}) ∪ range (λa. {a <..}))
+```
+
+In any *partially ordered* set we can show that for any two distinct points `x<y` there exist two open "cones"
+`{b <..}` and `{..< a}` containing each of the points `x ∈ {..< a}` and `y ∈ {b <..}` but which
+are disjoint `{..< a} ∩ {b <..} = {}`. The proof follows by considering cases when there exists `z`
+between `x` and `y` or not. 
+
+```
+lemma (in order) less_separate:
+  assumes "x < y"
+  shows "∃a b. x ∈ {..< a} ∧ y ∈ {b <..} ∧ {..< a} ∩ {b <..} = {}"
+proof (cases "∃z. x < z ∧ z < y")
+  case True
+  then obtain z where "x < z ∧ z < y" ..
+  then have "x ∈ {..< z} ∧ y ∈ {z <..} ∧ {z <..} ∩ {..< z} = {}"
+    by auto
+  then show ?thesis by blast
+next
+  case False
+  with ‹x < y› have "x ∈ {..< y}" "y ∈ {x <..}" "{x <..} ∩ {..< y} = {}"
+    by auto
+  then show ?thesis by blast
+qed
+```
+
+This looks a lot like separation axiom of Hausdorff space. Indeed we have
+
+```
+instance linorder_topology ⊆ t2_space
+proof
+  fix x y :: 'a
+  show "x ≠ y ⟹ ∃U V. open U ∧ open V ∧ x ∈ U ∧ y ∈ V ∧ U ∩ V = {}"
+    using less_separate [of x y] less_separate [of y x]
+    by (elim neqE; metis open_lessThan open_greaterThan Int_commute)
+qed
+```
+
+
+
+### Instances of topologies
+
+
+The `bool` type is the simplest example of a linearly-ordered topological space
+
+```
+instantiation bool :: linorder_topology
+begin
+
+definition open_bool :: "bool set ⇒ bool"
+  where "open_bool = generate_topology (range (λa. {..< a}) ∪ range (λa. {a <..}))"
+
+instance
+  by standard (rule open_bool_def)
+
+end
+```
+
+and it is also discrete
+
+```
+instance bool :: discrete_topology
+proof
+  fix A :: "bool set"
+  have *: "{False <..} = {True}" "{..< True} = {False}"
+    by auto
+  have "A = UNIV ∨ A = {} ∨ A = {False <..} ∨ A = {..< True}"
+    using subset_UNIV[of A] unfolding UNIV_bool * by blast
+  then show "open A"
+    by auto
+qed
+
+instantiation nat :: linorder_topology
+begin
+```
+
+The same holds for `nat` and `int`. Textbooks such as "Topology without tears" have the
+privilege of jumping straight to Euclidean topology on real numbers. For us reaching the definition of real numbers
+requires a lot more involvement and preparation. First we would need to understand Cauchy sequences and before that we need to cover neighborhoods and limit points. For now all the topologies we can instantiate are discrete.
+
+
+## Neighborhoods and filters
+
+Isabelle defines topological spaces using `open` sets. There exist [several](https://math.stackexchange.com/questions/799732/neighborhood-vs-neighborhood-filter) 
+equivalent definitions and one of them involves filters. Filters are not covered directly in "Topology without tears" (but are mentioned in the appendix). We have to cover them because they will make working with neighborhoods a lot easier.
+
+### Filters 
+
+Recall (\@ref(topological-space-def)) that `open:: 'a set ⇒ bool` was a predicate.
+With set comprehension it could be turned into the set `{x . open x} :: 'a set set` of open subsets.
+The distinction between set and predicate is blurry. Indeed, the axiomatization of `set` (\ref(set-def)) states
+explicitly the one-to-one correspondence between sets and predicates. Therefore, the definition
+of filter looks as follows.
+
+```
+locale is_filter =
+  fixes F :: "('a ⇒ bool) ⇒ bool"
+  assumes True: "F (λx. True)"
+  assumes conj: "F (λx. P x) ⟹ F (λx. Q x) ⟹ F (λx. P x ∧ Q x)"
+  assumes mono: "∀x. P x ⟶ Q x ⟹ F (λx. P x) ⟹ F (λx. Q x)"
+```
+
+This definition comes from old times before Isabelle had `set`.
+<details>
+<summary>Correspondence between sets and predicates</summary>
+The type `'a ⇒ bool` is a predicate, which might as well be thought of as `'a set`.
+Then `('a ⇒ bool) ⇒ bool` is 
+like a set of subsets `'a set set`. Hence, filter `F` is a set of subsets of the topological space `'a` just like τ.
+Unlike τ the axioms are different. The `conj` says that for any two sets `P` and `Q` belonging to `F`, their intersection is also in `F`. This axiom could have been equivalently written as
+
+```
+assumes conj: "P ∈ F ∧ Q ∈ F ⟹ Q ∩ P ∈ F"
+```
+
+The expression 
+`F (λx. P x)` could be simplified to `F P` (using [eta reduction](https://wiki.haskell.org/Eta_conversion) of lambda calculus) and then reformulated using set notation `P ∈ F`. 
+
+A similar reasoning allows us to rewrite `mono` into a more readable form
+
+```
+assumes mono: "P ⊆ Q ∧ P ∈ F ⟹ Q ∈ F"
+```
+
+The `(λx. True)` is the definition of the full set `UNIV`. 
+
+```
+assumes True: "UNIV ∈ F"
+```
+</details>
+In modern Isabelle it could be written as follows.
+```
+locale `is_filter =
+  fixes F :: "'a set set"
+  assumes True: "UNIV ∈ F"
+  assumes conj: "P ∈ F ∧ Q ∈ F ⟹ Q ∩ P ∈ F"
+  assumes mono: "P ⊆ Q ∧ P ∈ F ⟹ Q ∈ F"
+```
+
+Fortunately the notation doesn't matter because the following `typedef` turns the `is_filter` predicate into a set. Then we don't need to use `is_filter` anymore.
+
+```
+typedef 'a filter = "{F :: ('a ⇒ bool) ⇒ bool. is_filter F}"
+proof
+  show "(λx. True) ∈ ?filter" by (auto intro: is_filter.intro)
+qed
+```
+
+
+<details>
+<summary>**Important note: proper vs improper filters**</summary>
+The definition above is different from the one in "Topology without tears".
+Usually mathematicians would use axiom `{} ∉ F` instead of `UNIV ∈ F`. A filter that contains `{}` is called
+an *improper filter*. We can always assume `{} ∉ F` later on in proofs where it matters but there are also
+many proofs that would apply even to improper filters. Therefore Isabelle's definition is more general and flexible than that in textbooks. Also note that the `True` axiom is necessary because without it, it would be possible to define `F P = False` for all `P` (or in set theoretic notation `F = {}`) and then the axioms `conj` and `mono` would hold [vacuously](https://en.wikipedia.org/wiki/Vacuous_truth). Lack of `True` would render most proofs impossible but if `{} ∉ F` was used in place of `True` then `UNIV ∈ F` would follow from `mono`.
+</details>
+
+
+
+### Eventually
 
 
 

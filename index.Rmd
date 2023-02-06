@@ -23,4 +23,12 @@ For example we will first study topology before doing real analysis, functional 
 If you already know many of those branches of mathematics, this book might still be a valuable tool for learning Isabelle.
 It is a highly practical tutorial and also a good way to get deeply familiar with the standard library and complex proofs. 
 
+## Structure of the book
+
+
+Chapter \@ref(fundamentals-of-isabelle) covers all the building blocks that Isabelle has to offer.
+In sections \@ref(main-library) and  \@ref(locales) we explore (a fragment of) what the `Main` library has to offer.
+You may skip \@ref(main-library) but the section  \@ref(locales) is the most important as it introduces the concept of Locales. In later chapters we will put greater emphasis on "proper" mathematics and less on Isabelle itself.
+The chapter \@ref(fundamentals-of-isabelle) is sprinkled with code examples from the `Main` library
+but large parts of it are legacy code. In later chapters we will be using AFP instead of `Main`.
 

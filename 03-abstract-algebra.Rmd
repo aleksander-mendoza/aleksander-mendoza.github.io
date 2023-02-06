@@ -1,1 +1,636 @@
 # Abstract Algebra
+
+This chapter follows the book [Basic algebra by Nathan Jacobson](http://www.math.toronto.edu/~ila/Jacobson-Basic_algebra_I%20(1).pdf). It builds upon and extends the
+formalism in
+[Exploring the Structure of an Algebra Text with Locales by Clemens Ballarin](https://link.springer.com/epdf/10.1007/s10817-019-09537-9?sharing_token=97W4MSZFK4L3uH0elVRVH_e4RwlQNchNByi7wbcMAY5KYc96dcTyHMdpryx1k5gi0WC5UEo8zvJiqdCXY5-2wcE2iSbm4nby37i1CuC23KYX2dRyQ6bb6iCFQNnf5ySYrPcgW6Z1geuTK0yg39y9_0Emi-dA9oIjpw_onj6gMkg%3D). You can import it from AFP (see \@ref(afp))
+
+```
+theory XXX
+  imports Main "Jacobson_Basic_Algebra.Group_Theory"
+begin
+
+end       
+```
+
+
+## Monoids
+
+
+Monoid is a set `M` equipped with a `composition` (also called "multiplication") operation `⋅`
+and a `unit` (also called "neutral") element `𝟭`. 
+
+```
+text ‹Def 1.1›  (* this is definition 1.1 from the Basic algebra book*)
+text ‹p 28, ll 28--30› (* you can find it on page 28 *)
+locale monoid =
+  fixes M and composition (infixl "⋅" 70) and unit ("𝟭")
+  assumes composition_closed [intro, simp]: "⟦ a ∈ M; b ∈ M ⟧ ⟹ a ⋅ b ∈ M"
+    and unit_closed [intro, simp]: "𝟭 ∈ M"
+    and associative [intro]: "⟦ a ∈ M; b ∈ M; c ∈ M ⟧ ⟹ (a ⋅ b) ⋅ c = a ⋅ (b ⋅ c)"
+    and left_unit [intro, simp]: "a ∈ M ⟹ 𝟭 ⋅ a = a"
+    and right_unit [intro, simp]: "a ∈ M ⟹ a ⋅ 𝟭 = a"
+```
+Because this definition of `monoid` fixes three constants `M`, `composition` and `uni`,
+most math textbooks would say that `monoid` is a triple `(M,⋅,𝟭)`.
+
+Most axioms are similar to those in \@ref(main-monoids) but one is new.
+The axiom `composition_closed` says that the operation is closed, meaning that if we only operate on elements from `M`
+we will never go outside of this set. This axiom was missing in \@ref(main-monoids) which was severely limiting
+because without `M` and `composition_closed` it is impossible to define submonoids.
+
+```
+text ‹p 29, ll 27--28›
+locale submonoid = monoid M "(⋅)" 𝟭
+  for N and M and composition (infixl "⋅" 70) and unit ("𝟭") +
+  assumes subset: "N ⊆ M"
+    and sub_composition_closed: "⟦ a ∈ N; b ∈ N ⟧ ⟹ a ⋅ b ∈ N"
+    and sub_unit_closed: "𝟭 ∈ N"
+```
+The `for` keyword specifies that `monoid` is a prerequisite for `submonoid`. It is equivalent to the following (more familiar \@ref(main-monoids)) syntax definition
+```
+locale submonoid = monoid + 
+  fixes N 
+  assumes subset: "N ⊆ M" 
+    and sub_composition_closed: "[| a ∈ N; b ∈ N |] ⟹ a · b ∈ N" 
+    and sub_unit_closed: "𝟭 ∈ N"
+```
+with the only difference being the order of fixed constants (previously it was `N M composition unit` and now its `M composition unit N`). 
+In fact this latter definition (without `for`) is merely a syntactic sugar for the former one (with `for`).
+
+The axiom `sub_composition_closed` states that a submonoid is a subset `N` of monoid `M` such that the operation `·` is closed in `N`. 
+
+As an example we can show that  `nat` is a monoid under the addition operation
+<details>
+  <summary>Proof</summary>
+```
+theory Test
+  imports  "Jacobson_Basic_Algebra.Group_Theory"
+begin
+
+hide_type nat
+no_notation plus (infixl "+" 65) and Groups.zero_class.zero ("0")
+
+datatype nat = Zero ("0") | Suc nat
+
+primrec plus :: "nat ⇒ nat ⇒ nat" (infixl "+" 65) where
+"0 + y = y" |
+"(Suc x) + y = Suc (x + y)"
+
+interpretation plus: monoid "UNIV" plus Zero
+proof
+  fix a b c :: "nat"
+  show "a ∈ UNIV ⟹ b ∈ UNIV ⟹ a + b ∈ UNIV"
+    by simp_all
+  show "0 ∈ UNIV"
+    by simp
+  show "a ∈ UNIV ⟹ b ∈ UNIV ⟹ c ∈ UNIV ⟹ a + b + c = a + (b + c)"
+    by (simp, induct_tac a, auto) 
+  show "a ∈ UNIV ⟹ 0 + a = a"
+    by simp
+  show "a ∈ UNIV ⟹ a + 0 = a"
+    by (simp, induct_tac a, auto) 
+qed
+end
+```
+</details>
+and that even numbers form a submonoid.
+<details>
+  <summary>Proof</summary>
+Adding two even numbers together must yield  another even number, hence 
+the monoid is closed in the set of even numbers.
+
+```
+theory Test
+  imports  "Jacobson_Basic_Algebra.Group_Theory"
+begin
+
+hide_type nat
+no_notation plus (infixl "+" 65) and Groups.zero_class.zero ("0")
+
+datatype nat = Zero ("0") | Suc nat
+
+primrec plus :: "nat ⇒ nat ⇒ nat" (infixl "+" 65) where
+l_zero: "0 + y = y" | (* we assign the name l_zero to this equation so that we can use it like a theorem *)
+suc_dist: "(Suc x) + y = Suc (x + y)"
+
+inductive_set even :: "nat set" where
+zero_is_even[intro!]: "0 ∈ even" |
+step[intro!]: "n ∈ even ⟹ (Suc (Suc n)) ∈ even"
+(* Note: you can check the two following types in the Query tab *)
+(* Test.even :: "nat set" *)
+(* Group_Theory.monoid :: "'a set ⇒ ('a ⇒ 'a ⇒ 'a) ⇒ 'a ⇒ bool" *)
+interpretation plus: monoid "even" plus Zero
+proof
+  fix a b c :: "nat"
+  show "a ∈ even ⟹ b ∈ even ⟹ a + b ∈ even"
+    apply(erule even.induct)
+(* we perform induction as defined by the inductive_set
+ 1. b ∈ even ⟹ 0 + b ∈ even
+ 2. ⋀n. b ∈ even ⟹ n ∈ even ⟹ n + b ∈ even ⟹ Suc (Suc n) + b ∈ even 
+*)
+     apply(simp) (* this solves the 1. goal *)
+    apply(subst suc_dist) (* ⋀n. b ∈ even ⟹ n ∈ even ⟹ n + b ∈ even ⟹ Suc (Suc n + b) ∈ even *)
+    apply(subst suc_dist) (* ⋀n. b ∈ even ⟹ n ∈ even ⟹ n + b ∈ even ⟹ Suc (Suc (n + b)) ∈ even *)
+    apply(rule step) (* ⋀n. b ∈ even ⟹ n ∈ even ⟹ n + b ∈ even ⟹ n + b ∈ even *)
+    apply(assumption) (* the  "n + b ∈ even" is already among premises *)
+    done
+  show "0 ∈ even"
+    by(rule zero_is_even)
+  show "a ∈ even ⟹ b ∈ even ⟹ c ∈ even ⟹ a + b + c = a + (b + c)"
+    by(erule even.induct, auto)
+  show "a ∈ even ⟹ 0 + a = a"
+    by simp
+  show "a ∈ even ⟹ a + 0 = a"
+    by (erule even.induct, auto) 
+qed
+end
+```
+</details>
+
+Every submonoid is also a monoid, which is expressed using `sublocale` command.
+
+```
+context submonoid begin
+
+text ‹p 29, ll 27--28›
+lemma sub [intro, simp]:
+  "a ∈ N ⟹ a ∈ M"
+  using subset by blast
+
+text ‹p 29, ll 32--33›
+sublocale sub: monoid N "(⋅)" 𝟭
+  by unfold_locales (auto simp: sub_composition_closed sub_unit_closed)
+end
+```
+The brackets around `(⋅)` are necessary, otherwise you will get syntax error.
+Note that in the definition of `submonoid` we included `monoid M "(⋅)" 𝟭` as a prerequisite but
+now we are proving `monoid N "(⋅)" 𝟭`.
+Once the proof is done you will see
+```
+local.monoid_axioms: monoid M (⋅) 𝟭
+```
+in the "Find Theorems" tab but it will only show up if you place your cursor inside the `submonoid` context (this is what `local` stands for).
+
+The `submonoid` predicate (locales are predicates \@ref(main-semigroups)) is transitive, meaning that if `K` is
+a submonoid of `N` and `N` is a submonoid of `M` then `K` is a submonoid of `M`.
+
+```
+text ‹p 29, ll 33--34›
+theorem submonoid_transitive:
+  assumes "submonoid K N composition unit"
+    and "submonoid N M composition unit"
+  shows "submonoid K M composition unit"
+proof -
+  interpret K: submonoid K N composition unit by fact
+  interpret M: submonoid N M composition unit by fact
+  show ?thesis by unfold_locales auto
+qed
+```
+
+To understand what this proof does, click for more explanation below.
+<details>
+<summary>Proof explanation</summary>
+```
+theorem submonoid_transitive:
+  assumes "submonoid K N composition unit"
+    and "submonoid N M composition unit"
+  shows "submonoid K M composition unit"
+proof -
+  interpret K: submonoid K N composition unit by fact (* This works analogically to the `fixes` command *)
+  interpret M: submonoid N M composition unit by fact (* which allows us to use K and M in the proof. *)
+  show ?thesis (* This is shorthand for: "submonoid K M composition unit" *)
+    apply(unfold_locales)
+(* Current goals:
+  1. K ⊆ M
+  2. ⋀a b. a ∈ K ⟹ b ∈ K ⟹ composition a b ∈ K
+  3. unit ∈ K
+*)
+    apply(rule "Set.subset_trans"[of K N M])
+(* Use query tab to find the theorem and check the type of subset_trans
+  Set.subset_trans: ?A ⊆ ?B ⟹ ?B ⊆ ?C ⟹ ?A ⊆ ?C
+ The [of K N M] says that ?A ?B and ?C should be substituted with K N and M yielding rule
+  K ⊆ N ⟹ N ⊆ M ⟹ K ⊆ M
+ Its application transforms the goal "K ⊆ M" into two new goals
+  1. K ⊆ N
+  2. N ⊆ M
+  3. ⋀a b. a ∈ K ⟹ b ∈ K ⟹ composition a b ∈ K
+  4. unit ∈ K
+*)
+    apply(rule submonoid.subset[of K N composition unit])
+(* Use query tab to find the theorem and check its type
+  Group_Theory.submonoid.subset: submonoid ?N ?M ?composition ?unit ⟹ ?N ⊆ ?M
+ Application of this rule results in
+  1. submonoid K N composition unit
+  2. N ⊆ M
+  3. ⋀a b. a ∈ K ⟹ b ∈ K ⟹ composition a b ∈ K
+  4. unit ∈ K
+*)
+    apply(fact) (* "submonoid K N composition unit" is among premises *)
+    apply(rule submonoid.subset[of N M composition unit])
+    apply(fact) (* This solves the second subgoal analogically. We are now left with
+  1. ⋀a b. a ∈ K ⟹ b ∈ K ⟹ composition a b ∈ K
+  2. unit ∈ K
+ *)
+    apply(rule local.K.sub.composition_closed)
+(* 
+  1. ⋀a b. a ∈ K ⟹ b ∈ K ⟹ a ∈ K
+  2. ⋀a b. a ∈ K ⟹ b ∈ K ⟹ b ∈ K
+  3. unit ∈ K
+*)
+    apply(assumption)
+    apply(assumption)
+(* 
+  1. unit ∈ K
+*)
+    apply(rule local.K.sub_unit_closed)
+    done
+qed
+```
+</details>
+
+### Transformations
+
+A very important example of monoid is the operation of function composition.
+Consider some set `S`
+
+```
+text ‹p 28, l 23›
+locale transformations =
+  fixes S :: "'a set"
+(*  assumes non_vacuous: "S ≠ {}" *) (* Jacobson requires this but we don't need it, strange. *)
+```
+then the set of all functions `S →⇩E S` (\@ref(func-sets)) is a monoid under `compose` operation
+
+```
+text ‹Monoid of all transformations›
+text ‹p 28, ll 23--24›
+sublocale transformations ⊆ monoid "S →⇩E S" "compose S" "identity S"
+  by unfold_locales (auto simp: PiE_def compose_eq compose_assoc Id_compose compose_Id)
+```
+and `identity` is is the neutral element
+```
+abbreviation "identity S ≡ (λx ∈ S. x)"
+```
+
+## Inverse elements
+
+An element `u` of monoid `M` is invertible if there exist inverse element `v` such that `u ⋅ v = 𝟭`
+and `v ⋅ u = 𝟭`.
+```
+context monoid begin
+
+text ‹p 31, ll 3--5›
+definition invertible where "u ∈ M ⟹ invertible u ⟷ (∃v ∈ M. u ⋅ v = 𝟭 ∧ v ⋅ u = 𝟭)"
+```
+For example the inverse of `1` under addition operation (`plus`) is `-1` because `1 + (-1) = 0` and `0` is the neutral element of addition. The inverse of `1` under multiplication is `1` because `1 * 1 = 1` and `1` is the neutral element of multiplication.
+
+<details>
+<summary>Introduction and elimination rules needed for automated proofs</summary>
+```
+text ‹p 31, ll 3--5›
+lemma invertibleI [intro]:
+  "⟦ u ⋅ v = 𝟭; v ⋅ u = 𝟭; u ∈ M; v ∈ M ⟧ ⟹ invertible u"
+  unfolding invertible_def by fast
+
+text ‹p 31, ll 3--5›
+lemma invertibleE [elim]:
+  "⟦ invertible u; ⋀v. ⟦ u ⋅ v = 𝟭 ∧ v ⋅ u = 𝟭; v ∈ M ⟧ ⟹ P; u ∈ M ⟧ ⟹ P"
+  unfolding invertible_def by fast
+```
+</details>
+
+The inverse element is unique
+
+```
+text ‹p 31, ll 6--7›
+theorem inverse_unique:
+  "⟦ u ⋅ v' = 𝟭; v ⋅ u = 𝟭; u ∈ M;  v ∈ M; v' ∈ M ⟧ ⟹ v = v'"
+  by (metis associative left_unit right_unit)
+```
+
+because if `u ⋅ v' = 𝟭` and `v ⋅ u = 𝟭` then
+
+```
+v ⋅ (u ⋅ v') = v ⋅ 𝟭
+(v ⋅ u) ⋅ v' = v ⋅ 𝟭
+𝟭 ⋅ v' = v ⋅ 𝟭
+v' = v ⋅ 𝟭
+v' = v
+v = v'
+````
+
+<details> <summary> More detailed proof </summary>
+Here we are using Isar structured proof syntax. This allows us to use `from`...`have`
+to divide the proof into intermediate stepping stones for better readability.
+```
+theorem inverse_unique:
+  assumes uv1:"u ⋅ v' = 𝟭"
+  assumes vu1:"v ⋅ u = 𝟭"
+  assumes um:"u ∈ M"
+  assumes vm:"v ∈ M"
+  assumes v'm:"v' ∈ M"
+  shows "v = v'"
+proof -
+  from uv1 have "v ⋅ (u ⋅ v') = v ⋅ 𝟭"
+    apply (rule subst) (* 1. v ⋅ (u ⋅ v') = v ⋅ (u ⋅ v') *)
+    apply (rule refl) (* No subgoals! *)
+    done
+  from this um vm v'm have "v ⋅ u ⋅ v' = v ⋅ 𝟭" (*the keyword 'this' refers to the previous  stepping stone "v ⋅ (u ⋅ v') = v ⋅ 𝟭" *)
+    apply (subst associative)  (* 4 subgoals: *)
+(* 
+ 1. v ⋅ (u ⋅ v') = v ⋅ 𝟭 ⟹ u ∈ M ⟹ v ∈ M ⟹ v' ∈ M ⟹ v ∈ M
+ 2. v ⋅ (u ⋅ v') = v ⋅ 𝟭 ⟹ u ∈ M ⟹ v ∈ M ⟹ v' ∈ M ⟹ u ∈ M
+ 3. v ⋅ (u ⋅ v') = v ⋅ 𝟭 ⟹ u ∈ M ⟹ v ∈ M ⟹ v' ∈ M ⟹ v' ∈ M
+ 4. v ⋅ (u ⋅ v') = v ⋅ 𝟭 ⟹ u ∈ M ⟹ v ∈ M ⟹ v' ∈ M ⟹ v ⋅ (u ⋅ v') = v ⋅ 𝟭
+*)
+    apply (assumption) (* each subgoal occurs among the assumptions *)
+    apply (assumption)
+    apply (assumption)
+    apply (assumption)
+    done
+  from this vu1 have "𝟭 ⋅ v' = v ⋅ 𝟭"
+    apply(subst vu1[symmetric]) (*  1. v ⋅ u ⋅ v' = v ⋅ 𝟭 ⟹ v ⋅ u = 𝟭 ⟹ v ⋅ u ⋅ v' = v ⋅ 𝟭 *)
+    apply(assumption) (* No subgoals! *)
+    done
+  from v'm this have "v' = v ⋅ 𝟭"
+    apply(subst left_unit[symmetric]) (* two subgoals: *)
+(* 
+ 1. v' ∈ M ⟹ 𝟭 ⋅ v' = v ⋅ 𝟭 ⟹ v' ∈ M
+ 2. v' ∈ M ⟹ 𝟭 ⋅ v' = v ⋅ 𝟭 ⟹ 𝟭 ⋅ v' = v ⋅ 𝟭
+*)
+    apply(assumption) (* each subgoal occurs among the assumptions *)
+    apply(assumption)
+    done
+  from vm this show "v = v'"
+    apply(subst right_unit[symmetric]) (* 2 subgoals: *)
+(*
+ 1. v ∈ M ⟹ v' = v ⋅ 𝟭 ⟹ v ∈ M
+ 2. v ∈ M ⟹ v' = v ⋅ 𝟭 ⟹ v ⋅ 𝟭 = v' 
+*)
+    apply(assumption) (*  1. v ∈ M ⟹ v' = v ⋅ 𝟭 ⟹ v ⋅ 𝟭 = v' *)
+    apply(rule sym)   (*  1. v ∈ M ⟹ v' = v ⋅ 𝟭 ⟹ v' = v ⋅ 𝟭 *)
+    apply(assumption) (* No subgoals! *)
+    done
+qed
+```
+</details>
+
+Now that we know the inverse is unique, we can use `THE` to define an inverse function
+
+```
+text ‹p 31, l 7›
+definition inverse where "inverse = (λu ∈ M. THE v. v ∈ M ∧ u ⋅ v = 𝟭 ∧ v ⋅ u = 𝟭)"
+```
+
+The keyword `THE` is a sister of Hilbert's epsilon operator `SOME` (\@ref(inj-sur-bij))
+Notice that this definition requires both `u ⋅ v = 𝟭` and `v ⋅ u = 𝟭`.
+If only `u ⋅ v = 𝟭` holds then 
+`v` is the right inverse of `u`.
+If only `v ⋅ u =𝟭` holds then 
+`v` is the left inverse of `u`.
+If `v` is both left and right inverse then `v` is THE `inverse` of `u`.
+
+If inverse does not exist then it is `undefined`
+
+```
+text ‹p 31, l 7›
+lemma inverse_undefined [intro, simp]:
+  "u ∉ M ⟹ inverse u = undefined"
+  by (simp add: inverse_def)
+```
+
+If it does exist then it is guaranteed belong to `M`
+
+```
+text ‹p 31, l 7›
+lemma invertible_inverse_closed [intro, simp]:
+  "⟦ invertible u; u ∈ M ⟧ ⟹ inverse u ∈ M"
+  using inverse_equality by auto
+```
+
+Clearly the inverse of neutral element is the element itself
+
+```
+text ‹p 31, l 7›
+lemma inverse_unit [simp]: "inverse 𝟭 = 𝟭"
+  using inverse_equality by blast
+```
+
+The inverse of an inverse returns back the same element
+
+```
+text ‹p 31, l 8›
+theorem invertible_inverse_inverse [simp]:
+  "⟦ invertible u; u ∈ M ⟧ ⟹ inverse (inverse u) = u"
+  by (simp add: inverse_equality)
+```
+
+The inverses are preserved in submonoids
+
+```
+text ‹p 31, l 7›
+lemma submonoid_invertible [intro, simp]:
+  "⟦ sub.invertible u; u ∈ N ⟧ ⟹ invertible u"
+  using invertibleI by blast
+
+text ‹p 31, l 7›
+lemma submonoid_inverse_closed [intro, simp]:
+  "⟦ sub.invertible u; u ∈ N ⟧ ⟹ inverse u ∈ N"
+  using inverse_equality by auto
+```
+
+## Groups
+
+If all elements are invertible (the inverse always exists) then we call such monoid a *group*
+
+```
+text ‹Def 1.2›
+text ‹p 31, ll 9--10›
+locale group =
+  monoid G "(⋅)" 𝟭 for G and composition (infixl "⋅" 70) and unit ("𝟭") +
+  assumes invertible [simp, intro]: "u ∈ G ⟹ invertible u"
+```
+
+Subgroups are submonoids of groups whose inverse elements belong to that submonoid.
+
+```
+text ‹p 31, ll 11--12›
+locale subgroup = submonoid G M "(⋅)" 𝟭 + sub: group G "(⋅)" 𝟭
+  for G and M and composition (infixl "⋅" 70) and unit ("𝟭")
+begin
+
+text ‹Reasoning about @{term invertible} and @{term inverse} in subgroups.›
+
+text ‹p 31, ll 11--12›
+lemma subgroup_inverse_equality [simp]:
+  "u ∈ G ⟹ inverse u = sub.inverse u"
+  by (simp add: inverse_equality)
+
+text ‹p 31, ll 11--12›
+lemma subgroup_inverse_iff [simp]:
+  "⟦ invertible x; x ∈ M ⟧ ⟹ inverse x ∈ G ⟷ x ∈ G"
+  using invertible_inverse_inverse sub.invertible_inverse_closed by fastforce
+
+end (* subgroup *)
+```
+In other words, subgroups are subsets of groups that are groups themselves and contain the
+neutral element.
+
+For example `int` integers are group under addition `+` and `0` is the neutral element. Every integer `i` has an inverse element `-i`. An example of subgroup are the even integers `...,-4, -2, 0, 2, 4,...` but the odd integers are not a subgroup because they do not contain a neutral element nor are closed under addition (sum of two odd numbers gives an even number). Natural numbers `nat` are not a group because `-i` is not a `nat` for any `i` except `0`.
+Lists `'a list` are a monoid under append `@` operation but not a group. 
+
+Just like for submonoids, being a subgroup is a transitive relation
+
+```
+lemma subgroup_transitive [trans]:
+  assumes "subgroup K H composition unit"
+    and "subgroup H G composition unit"
+  shows "subgroup K G composition unit"
+proof -
+  interpret K: subgroup K H composition unit by fact
+  interpret H: subgroup H G composition unit by fact
+  show ?thesis by unfold_locales auto
+qed
+```
+
+To know whether some set `G` is a subgroup of some group `M` it is enough to check whether the neutral element belongs to `G`, the group operation is closed `g ⋅ h ∈ G` in `G` and all
+elements have their inverses in `G`.
+
+```
+text ‹Jacobson states both directions, but the other one is trivial.›
+text ‹p 31, ll 12--15›
+theorem subgroupI:
+  fixes G
+  assumes subset [THEN subsetD, intro]: "G ⊆ M"
+    and [intro]: "𝟭 ∈ G"
+    and [intro]: "⋀g h. ⟦ g ∈ G; h ∈ G ⟧ ⟹ g ⋅ h ∈ G"
+    and [intro]: "⋀g. g ∈ G ⟹ invertible g"
+    and [intro]: "⋀g. g ∈ G ⟹ inverse g ∈ G"
+  shows "subgroup G M (⋅) 𝟭"
+proof -
+  interpret sub: monoid G "(⋅)" 𝟭 by unfold_locales auto
+  show ?thesis
+  proof unfold_locales
+    fix u assume [intro]: "u ∈ G" show "sub.invertible u"
+    using invertible_left_inverse invertible_right_inverse by blast
+  qed auto
+qed
+```
+
+The set of all invertible element of some monoid `M`
+
+```
+text ‹p 31, l 16›
+definition "Units = {u ∈ M. invertible u}"
+```
+
+forms a subgroup
+
+```
+text ‹p 31, ll 16--21›
+interpretation units: subgroup Units M
+proof (rule subgroupI)
+  fix u1 u2
+  assume Units [THEN mem_UnitsD, simp]: "u1 ∈ Units" "u2 ∈ Units"
+  have "(u1 ⋅ u2) ⋅ (inverse u2 ⋅ inverse u1) = (u1 ⋅ (u2 ⋅ inverse u2)) ⋅ inverse u1"
+    by (simp add: associative del: invertible_left_inverse invertible_right_inverse)
+  also have "… = 𝟭" by simp
+  finally have inv1: "(u1 ⋅ u2) ⋅ (inverse u2 ⋅ inverse u1) = 𝟭" by simp  ― ‹ll 16--18›
+  have "(inverse u2 ⋅ inverse u1) ⋅ (u1 ⋅ u2) = (inverse u2 ⋅ (inverse u1 ⋅ u1)) ⋅ u2"
+    by (simp add: associative del: invertible_left_inverse invertible_right_inverse)
+  also have "… = 𝟭" by simp
+  finally have inv2: "(inverse u2 ⋅ inverse u1) ⋅ (u1 ⋅ u2) = 𝟭" by simp  ― ‹l 9, ``and similarly''›
+  show "u1 ⋅ u2 ∈ Units" using inv1 inv2 invertibleI mem_UnitsI by auto
+qed (auto simp: Units_def)
+```
+
+Composition of inverses is an inverse of compositions
+
+```
+text ‹p 31, l 22›
+lemma inverse_composition_commute:
+  assumes [simp]: "invertible x" "invertible y" "x ∈ M" "y ∈ M"
+  shows "inverse (x ⋅ y) = inverse y ⋅ inverse x"
+proof -
+  have "inverse (x ⋅ y) ⋅ (x ⋅ y) = (inverse y ⋅ inverse x) ⋅ (x ⋅ y)"
+  by (simp add: invertible_left_inverse2 associative)
+  then show ?thesis by (simp del: invertible_left_inverse)
+qed
+```
+
+#### Transformations
+
+Let's consider the example monoid of transformations.
+A function `α` from `S` to `S` has an inverse *α<sup>-1</sup>* if *α(α<sup>-1</sup>(s))=s*
+and *α<sup>-1</sup>(α(s))=s* holds for all `s ∈ S`. Such `α<sup>-1</sup>` can exist only if
+`α` is a bijection (\@ref(inj-sur-bij)).
+
+```
+context transformations begin
+
+text ‹p 31, ll 25--26›
+theorem invertible_is_bijective:
+  assumes dom: "α ∈ S →⇩E S"
+  shows "invertible α ⟷ bij_betw α S S"
+proof -
+  from dom interpret map α S S by unfold_locales
+  show ?thesis by (auto simp add: bij_betw_iff_has_inverse invertible_def)
+qed
+```
+
+Therefore, the set of bijective functions forms a group
+
+```
+text ‹p 31, ll 26--27›
+theorem Units_bijective:
+  "Units = {α ∈ S →⇩E S. bij_betw α S S}"
+  unfolding Units_def by (auto simp add: invertible_is_bijective)
+```
+
+This group has very special properties and occurs in many places. Mathematicians gave it
+a special name and call this set the *symmetric group*. When the domain `S` is finite and has
+`n` elements then the standard notation for this group is ***S**<sub>n</sub>* (The bold **S** stands for "symmetric". The fact that domain is denoted by `S` is purely coincidental). 
+
+
+```
+text ‹p 31, ll 28--29›
+abbreviation "Sym ≡ Units"
+
+text ‹p 31, ll 26--28›
+sublocale symmetric: group "Sym" "compose S" "identity S"
+  by (fact group_of_Units)
+
+end (* transformations *)
+```
+
+### Homomorphisms
+
+
+
+
+### Equivalence classes
+
+
+```
+text ‹p 11, ll 6--11›
+locale equivalence =
+  fixes S and E
+  assumes closed [intro, simp]: "E ⊆ S × S"
+    and reflexive [intro, simp]: "a ∈ S ⟹ (a, a) ∈ E"
+    and symmetric [sym]: "(a, b) ∈ E ⟹ (b, a) ∈ E"
+    and transitive [trans]: "⟦ (a, b) ∈ E; (b, c) ∈ E ⟧ ⟹ (a, c) ∈ E"
+begin
+
+text ‹p 11, ll 6--11›
+lemma left_closed [intro]: (* inefficient as a simp rule *)
+  "(a, b) ∈ E ⟹ a ∈ S"
+  using closed by blast
+  
+text ‹p 11, ll 6--11›
+lemma right_closed [intro]: (* inefficient as a simp rule *)
+  "(a, b) ∈ E ⟹ b ∈ S"
+  using closed by blast
+  
+end
+```
+
