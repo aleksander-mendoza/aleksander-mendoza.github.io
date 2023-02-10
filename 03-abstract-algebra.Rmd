@@ -12,31 +12,92 @@ begin
 end       
 ```
 
+We will add our own improvements and extensions to this library.
+The modified code can be found on [github](https://github.com/aleksander-mendoza/Isabelle).
 
-## Monoids
+
+## Semigroups
 
 
-Monoid is a set `M` equipped with a `composition` (also called "multiplication") operation `⋅`
-and a `unit` (also called "neutral") element `𝟭`. 
+Semigroup is a set `M` equipped with a `composition` (also called "multiplication") operation `⋅`
+which is associative, that is `(a ⋅ b) ⋅ c = a ⋅ (b ⋅ c)`.
+```
+locale semigroup =
+  fixes M and composition (infixl "⋅" 70)
+  assumes composition_closed [intro, simp]: "⟦ a ∈ M; b ∈ M ⟧ ⟹ a ⋅ b ∈ M"
+    and associative [intro]: "⟦ a ∈ M; b ∈ M; c ∈ M ⟧ ⟹ (a ⋅ b) ⋅ c = a ⋅ (b ⋅ c)"
+```
+Because this definition of `semigroup` fixes two constants `M` and `composition`,
+most math textbooks would say that `monoid` is a tuple `(M,⋅)`.
+
+Most axioms are similar to those in \@ref(main-semigroups) but one is new.
+The axiom `composition_closed` says that the operation is closed, meaning that if we only operate on elements from `M`
+we will never go outside of this set. This axiom was missing in \@ref(main-semigroups) which was severely limiting
+because without `M` and `composition_closed` it is impossible to define subsemigroups.
+
+```
+locale subsemigroup = semigroup M "(⋅)"
+  for N and M and composition (infixl "⋅" 70) +
+  assumes subset: "N ⊆ M"
+    and sub_composition_closed: "⟦ a ∈ N; b ∈ N ⟧ ⟹ a ⋅ b ∈ N"
+```
+The `for` keyword specifies that `semigroup` is a prerequisite for `subsemigroup`. It is equivalent to the following (more familiar \@ref(main-semigroups)) syntax definition
+```
+locale subsemigroup = semigroup + 
+  fixes N 
+  assumes subset: "N ⊆ M" 
+    and sub_composition_closed: "[| a ∈ N; b ∈ N |] ⟹ a · b ∈ N" 
+```
+with the only difference being the order of fixed constants (previously it was `N M composition unit` and now its `M composition unit N`). 
+In fact this latter definition (without `for`) is merely a syntactic sugar for the former one (with `for`).
+
+The axiom `sub_composition_closed` states that a subsemigroup is a subset `N` of semigroup `M` such that the operation `·` is closed in `N`. 
+
+Every subsemigroup is also a semigroup, which is expressed using `sublocale` command.
+
+```
+context subsemigroup begin
+lemma sub [intro, simp]:
+  "a ∈ N ⟹ a ∈ M"
+  using subset by blast
+
+sublocale sub: semigroup N "(⋅)"
+  by unfold_locales (auto simp: sub_composition_closed)
+
+end (* subsemigroup *)
+```
+The brackets around `(⋅)` are necessary, otherwise you will get syntax error.
+Note that in the definition of `subsemigroup` we included `semigroup M "(⋅)"` as a prerequisite but
+now we are proving `semigroup N "(⋅)"`.
+Once the proof is done you will see
+```
+local.sub.semigroup_axioms: semigroup N (⋅)
+```
+in the "Find Theorems" tab but it will only show up if you place your cursor inside the `subsemigroup` context (this is what `local` stands for).
+
+
+## Monoids {#locale-monoids}
+
+
+Monoid is a set `M` equipped with a `composition` (also called "multiplication") associative operation `⋅`
+and a `unit` (also called "neutral") element `𝟭`. Every monoid is a semigroup, therefore we include 
+`semigroup M "(⋅)"` as a prerequisite for `monoid`.
 
 ```
 text ‹Def 1.1›  (* this is definition 1.1 from the Basic algebra book*)
 text ‹p 28, ll 28--30› (* you can find it on page 28 *)
 locale monoid =
-  fixes M and composition (infixl "⋅" 70) and unit ("𝟭")
-  assumes composition_closed [intro, simp]: "⟦ a ∈ M; b ∈ M ⟧ ⟹ a ⋅ b ∈ M"
-    and unit_closed [intro, simp]: "𝟭 ∈ M"
-    and associative [intro]: "⟦ a ∈ M; b ∈ M; c ∈ M ⟧ ⟹ (a ⋅ b) ⋅ c = a ⋅ (b ⋅ c)"
+  semigroup M "(⋅)" for M and composition (infixl "⋅" 70) and unit ("𝟭") +
+  assumes unit_closed [intro, simp]: "𝟭 ∈ M"
     and left_unit [intro, simp]: "a ∈ M ⟹ 𝟭 ⋅ a = a"
     and right_unit [intro, simp]: "a ∈ M ⟹ a ⋅ 𝟭 = a"
 ```
 Because this definition of `monoid` fixes three constants `M`, `composition` and `uni`,
-most math textbooks would say that `monoid` is a triple `(M,⋅,𝟭)`.
+most math textbooks would say that `monoid` is a triple `(M,⋅,𝟭)`. 
 
-Most axioms are similar to those in \@ref(main-monoids) but one is new.
-The axiom `composition_closed` says that the operation is closed, meaning that if we only operate on elements from `M`
-we will never go outside of this set. This axiom was missing in \@ref(main-monoids) which was severely limiting
-because without `M` and `composition_closed` it is impossible to define submonoids.
+
+Most axioms are similar to those in \@ref(main-monoids). We can define submonoids
+similarly as before.
 
 ```
 text ‹p 29, ll 27--28›
@@ -46,18 +107,6 @@ locale submonoid = monoid M "(⋅)" 𝟭
     and sub_composition_closed: "⟦ a ∈ N; b ∈ N ⟧ ⟹ a ⋅ b ∈ N"
     and sub_unit_closed: "𝟭 ∈ N"
 ```
-The `for` keyword specifies that `monoid` is a prerequisite for `submonoid`. It is equivalent to the following (more familiar \@ref(main-monoids)) syntax definition
-```
-locale submonoid = monoid + 
-  fixes N 
-  assumes subset: "N ⊆ M" 
-    and sub_composition_closed: "[| a ∈ N; b ∈ N |] ⟹ a · b ∈ N" 
-    and sub_unit_closed: "𝟭 ∈ N"
-```
-with the only difference being the order of fixed constants (previously it was `N M composition unit` and now its `M composition unit N`). 
-In fact this latter definition (without `for`) is merely a syntactic sugar for the former one (with `for`).
-
-The axiom `sub_composition_closed` states that a submonoid is a subset `N` of monoid `M` such that the operation `·` is closed in `N`. 
 
 As an example we can show that  `nat` is a monoid under the addition operation
 <details>
@@ -147,7 +196,7 @@ end
 ```
 </details>
 
-Every submonoid is also a monoid, which is expressed using `sublocale` command.
+Every submonoid is also a monoid.
 
 ```
 context submonoid begin
@@ -162,14 +211,6 @@ sublocale sub: monoid N "(⋅)" 𝟭
   by unfold_locales (auto simp: sub_composition_closed sub_unit_closed)
 end
 ```
-The brackets around `(⋅)` are necessary, otherwise you will get syntax error.
-Note that in the definition of `submonoid` we included `monoid M "(⋅)" 𝟭` as a prerequisite but
-now we are proving `monoid N "(⋅)" 𝟭`.
-Once the proof is done you will see
-```
-local.monoid_axioms: monoid M (⋅) 𝟭
-```
-in the "Find Theorems" tab but it will only show up if you place your cursor inside the `submonoid` context (this is what `local` stands for).
 
 The `submonoid` predicate (locales are predicates \@ref(main-semigroups)) is transitive, meaning that if `K` is
 a submonoid of `N` and `N` is a submonoid of `M` then `K` is a submonoid of `M`.
@@ -374,6 +415,42 @@ proof -
 qed
 ```
 </details>
+<details> <summary> More detailed proof (using `unfolding`) </summary>
+```
+theorem inverse_unique:
+  assumes uv1: "u ⋅ v' = 𝟭"
+  assumes vu1: "v ⋅ u = 𝟭"
+  assumes um: "u ∈ M"
+  assumes vm: "v ∈ M"
+  assumes v'm: "v' ∈ M"
+  shows "v = v'"
+proof -
+  have "v ⋅ (u ⋅ v') = v ⋅ 𝟭" unfolding uv1 by (rule refl)
+  from this have "v ⋅ u ⋅ v' = v ⋅ 𝟭" unfolding associative[OF vm um v'm] by assumption
+  from this have "𝟭 ⋅ v' = v ⋅ 𝟭" unfolding vu1 by assumption
+  from this have "v' = v ⋅ 𝟭" unfolding left_unit[OF v'm] by assumption
+  from this show "v = v'" unfolding right_unit[OF vm] by (rule sym)
+qed
+```
+</details>
+<details> <summary> More detailed proof (using `also have`) </summary>
+```
+theorem inverse_unique:
+  assumes uv1: "u ⋅ v' = 𝟭"
+  assumes vu1: "v ⋅ u = 𝟭"
+  assumes um: "u ∈ M"
+  assumes vm: "v ∈ M"
+  assumes v'm: "v' ∈ M"
+  shows "v = v'"
+proof -
+  have ‹v = v ⋅ 𝟭› using right_unit[OF vm, symmetric] .
+  also have ‹... = v ⋅ (u ⋅ v')› unfolding uv1 ..
+  also have ‹... = v ⋅ u ⋅ v'› using associative[OF vm um v'm, symmetric] .
+  also have ‹... = 𝟭 ⋅ v'› unfolding vu1 ..
+  finally show ?thesis unfolding left_unit[OF v'm] .
+qed
+```
+</details>
 
 Now that we know the inverse is unique, we can use `THE` to define an inverse function
 
@@ -428,6 +505,8 @@ theorem invertible_inverse_inverse [simp]:
 The inverses are preserved in submonoids
 
 ```
+context submonoid begin
+
 text ‹p 31, l 7›
 lemma submonoid_invertible [intro, simp]:
   "⟦ sub.invertible u; u ∈ N ⟧ ⟹ invertible u"
@@ -438,6 +517,24 @@ lemma submonoid_inverse_closed [intro, simp]:
   "⟦ sub.invertible u; u ∈ N ⟧ ⟹ inverse u ∈ N"
   using inverse_equality by auto
 ```
+
+The `sub.invertible u` refers to `u` being invertible in the submonoid `N`,
+while `invertible u` refers to `u` being invertible in the original monoid `M`. The `sub` itself refers to the
+<details><summary>label we gave before in the `sublocale` command.</summary>
+```
+context submonoid begin
+text ‹p 29,ll 32--33›
+sublocale sub: monoid N "(⋅)" 𝟭
+  by unfold_locales (auto simp: sub_composition_closed sub_unit_closed)
+end
+```
+It says that any function or predicate (like `invertible`) defined in `monoid` can be applied to `submonoid`.
+</details>
+Note that the reverse implication `⟦invertible u; u ∈ N ⟧ ⟹ sub.invertible u` is not true.
+<details><summary>Counterexample</summary>
+As a counterexample take the monoid `M` of integers `int set` (...`-2`,`-1`,`0`,`1`,`2`...) with `+` operation and `0` neutral element
+together with submonoid `N` consisting of non-negative numbers (`0`,`1`,`2`...). Then each positive number is `invertible` in the original `M` but not `sub.invertible` in `N`.
+</details>
 
 ## Groups
 
@@ -558,12 +655,12 @@ proof -
 qed
 ```
 
-#### Transformations
+### Transformations
 
 Let's consider the example monoid of transformations.
 A function `α` from `S` to `S` has an inverse *α<sup>-1</sup>* if *α(α<sup>-1</sup>(s))=s*
-and *α<sup>-1</sup>(α(s))=s* holds for all `s ∈ S`. Such `α<sup>-1</sup>` can exist only if
-`α` is a bijection (\@ref(inj-sur-bij)).
+and *α<sup>-1</sup>(α(s))=s* holds for all `s ∈ S`. Such α<sup>-1</sup> can exist only if
+α is a bijection (\@ref(inj-sur-bij)).
 
 ```
 context transformations begin
@@ -603,34 +700,229 @@ sublocale symmetric: group "Sym" "compose S" "identity S"
 end (* transformations *)
 ```
 
-### Homomorphisms
 
+Subgroups `G` of a symmetric group `Sym` (over domain `S`) are an 
+important object in the Cayley theorem, therefore, 
+we create a dedicated locale just for them
+```
+text ‹p 32, ll 18--19›
+locale transformation_group =
+  transformations S + symmetric: subgroup G Sym "compose S" "identity S" for G and S
+begin
+```
+<details>
+<summary>Some simple properties of transformation group.</summary>
+```
+text ‹p 32, ll 18--19›
+lemma transformation_group_closed [intro, simp]:
+  "⟦ α ∈ G; x ∈ S ⟧ ⟹ α x ∈ S"
+  using bij_betwE by blast
 
+text ‹p 32, ll 18--19›
+lemma transformation_group_undefined [intro, simp]:
+  "⟦ α ∈ G; x ∉ S ⟧ ⟹ α x = undefined"
+  by (metis compose_def symmetric.sub.right_unit restrict_apply)
 
+end (* transformation_group *)
+```
+</details>
 
-### Equivalence classes
+## Homomorphisms
 
+We intuitively know that there is a certain correspondence between natural numbers `nat` and
+length of list `'a list`. Consider appending two lists `A @ B = C`, for example
+```
+value "[1,4,3] @ [6,8,3]::nat list " (* yields "[1, 4, 3, 6, 8, 3]" *)
+```
+In order to know the length of `C` it is enough to know the length of `A` and `B` and add the two numbers together.
+We can write this as
+```
+value "length ([1,4,3] @ [6,8,3::nat]) = length ([1,4,3::nat]) + length([6,8,3::nat])"
+```
+In computer programming, such correspondences between various objects are very common and
+we can take advantage of them to optimize the code 
+(for example, in C we could preallocate an array of the right length before concatenating two other arrays using [memcpy](https://www.tutorialspoint.com/c_standard_library/c_function_memcpy.htm))
+
+Some other examples are 
+```
+definition b2n :: "bool ⇒ nat" where
+"b2n b = (if b then 1 else 0)"
+
+(* nat is a monoid under max operation *)
+value "b2n(True ∨ False) = max (b2n True) (b2n False)"
+
+(* nat is a monoid under min operation *)
+value "b2n(True ∧ False) = min (b2n True) (b2n False)"
+
+(* int is a monoid under both min and max operation *)
+value "max (abs (-4)::int) (abs (-5)::int) = abs (min (-4) (-5)::int)"
+```
+We can see a common pattern emerging among all of those examples. There is some function `f`
+that translates elements of one monoid into another and it distributes over the monoid operations
+`f(a * b) = f(a) + f(b)`.
+This leads us to the definition of monoid morphism.
 
 ```
-text ‹p 11, ll 6--11›
-locale equivalence =
-  fixes S and E
-  assumes closed [intro, simp]: "E ⊆ S × S"
-    and reflexive [intro, simp]: "a ∈ S ⟹ (a, a) ∈ E"
-    and symmetric [sym]: "(a, b) ∈ E ⟹ (b, a) ∈ E"
-    and transitive [trans]: "⟦ (a, b) ∈ E; (b, c) ∈ E ⟧ ⟹ (a, c) ∈ E"
+locale monoid_morphism = 
+  map η M M'+  source: monoid M "(⋅)" 𝟭 + target: monoid M' "(⋅')" "𝟭'"
+  for η and M and composition (infixl "⋅" 70) and unit ("𝟭")
+    and M' and composition' (infixl "⋅''" 70) and unit' ("𝟭''") +
+  assumes commutes_with_composition: "⟦ x ∈ M; y ∈ M ⟧ ⟹ η x ⋅' η y = η (x ⋅ y)"
 begin
 
-text ‹p 11, ll 6--11›
-lemma left_closed [intro]: (* inefficient as a simp rule *)
-  "(a, b) ∈ E ⟹ a ∈ S"
-  using closed by blast
-  
-text ‹p 11, ll 6--11›
-lemma right_closed [intro]: (* inefficient as a simp rule *)
-  "(a, b) ∈ E ⟹ b ∈ S"
-  using closed by blast
-  
-end
+text ‹p 58, l 33; p 59, ll 1--2›
+notation source.invertible ("invertible _" [100] 100)
+notation source.inverse ("inverse _" [100] 100)
+notation target.invertible ("invertible'' _" [100] 100)
+notation target.inverse ("inverse'' _" [100] 100)
+
+end (* monoid_homomorphism *)
 ```
+
+In other words, morphism `η` is a `map η M M'` (see \@ref(locale-sur-inj-bij)) from monoid `M` to monoid `M'`
+such that `η x ⋅' η y = η (x ⋅ y)` holds. 
+
+**Important note!** The term "morphism" is not typically encountered in abstract algebra textbooks.
+I borrowed this term from category theory, where its definition is different and more general than ours.
+The reason why we need `monoid_morphism` is because there are certain intricate details
+in the definition of isomorphism (which we are yet to introduce)
+that a typical mathematician can state informally but in Isabelle we have to be much more rigorous.
+
+Monoid *homomorphism* is a special case of morphism such that `η x ⋅' η y = η (x ⋅ y)`
+holds **and** the neutral element 𝟭 (from monoid `M`) is mapped to 
+the neutral element `η 𝟭 = 𝟭'` (in monoid `M'`).
+
+```
+text ‹Def 1.6›
+text ‹p 58, l 33; p 59, ll 1--2›
+locale monoid_homomorphism = monoid_morphism η  M "(⋅)" 𝟭 M' "(⋅')" "𝟭'"
+  for η and M and composition (infixl "⋅" 70) and unit ("𝟭")
+    and M' and composition' (infixl "⋅''" 70) and unit' ("𝟭''")  +
+  assumes commutes_with_unit: "η 𝟭 = 𝟭'"
+```
+
+A `monoid_homomorphism` can be surjective or injective, analogically as it was defined for `map`. 
+When the homomorphism is surjective we call it an epimorphism. When it's injective, it's called monomorphism.
+
+```
+text ‹p 59, ll 29--30›
+locale monoid_epimorphism = monoid_homomorphism + surjective_map η M M'
+
+text ‹p 59, l 30›
+locale monoid_monomorphism = monoid_homomorphism + injective_map η M M'
+```
+
+### Isomorphisms
+
+When a homomorphism is both surjective and injective then it is bijective. Such homomorphism
+is called an isomorphism. However, this is where Isabelle departs from informal mathematics.
+We will not define isomorphism as `monoid_homomorphism + bijective_map η M M'`
+because a much simpler and more elegant definition is as follows
+
+```
+locale monoid_isomorphism = bijective_map η M M' + monoid_morphism
+```
+
+This definition does not assume `commutes_with_unit` axiom because it follows from 
+`commutes_with_composition` and `bijective` axioms.
+
+```
+context monoid_isomorphism begin                                           
+theorem commutes_with_unit: "η 𝟭 = 𝟭'"
+proof -
+  {
+    fix y assume "y ∈ M'"
+    then obtain x where nxy:"η x = y" "x ∈ M" by (metis image_iff surjective)
+    then have "η x ⋅' η 𝟭 = η x" using commutes_with_composition by auto
+    then have "y ⋅' η 𝟭 = y" using nxy by auto
+  }
+  then show "η 𝟭 = 𝟭'" by fastforce
+qed
+```
+<details>
+<summary>Proof explanation.</summary>
+The proof is very readable if you know that the curly braces `{ }`
+are used to state a sub-theorem that fixes `"y ∈ M'"`
+and shows `"y ⋅' η 𝟭 = y"`. Therefore
+the curly braces are to be understood as a lemma *for all `y ∈ M'` we have `y ⋅' η 𝟭 = y`*.
+And then from this sub-theorem the final result `η 𝟭 = 𝟭'` follows. The `fastforce`
+is one of many automated theorem solvers that Isabelle has to offer.
+</details>
+
+Every isomorphism is a homomorphism.
+```
+sublocale hom: monoid_homomorphism η  M "(⋅)" 𝟭 M' "(⋅')" "𝟭'"
+  by(unfold_locales, rule commutes_with_unit)
+  
+end (* monoid_isomorphism *)
+```
+
+An isomorphism is also an epimorphism and monomorphism.
+
+```
+text ‹p 59, ll 30--31›
+sublocale monoid_isomorphism ⊆ monoid_epimorphism
+  by unfold_locales (auto simp: commutes_with_composition commutes_with_unit)
+
+text ‹p 59, ll 30--31›
+sublocale monoid_isomorphism ⊆ monoid_monomorphism
+  by unfold_locales (auto simp: commutes_with_composition commutes_with_unit)
+```
+
+
+Isomorphisms allow us to treat two monoids as if they were the same.
+This has many implications in computer science. For example instead of multiplying two
+real numbers `a*b` we can add their logarithms `log (a * b) = log a + log b`.
+This isomorphism is used a lot in statistics and machine learning. It allows for
+more stable, accurate and faster computation of small probabilities. It is also the basis for
+[variational inference](https://en.wikipedia.org/wiki/Variational_Bayesian_methods)
+which lead to [predictive coding](https://en.wikipedia.org/wiki/Predictive_coding) 
+and has been proposed as a model of information processing in the real brain.
+
+Suppose there are two monoids `ℳ` and `ℳ'`
+such that 
+`(M, composition, unit) = ℳ`
+`(M', composition', unit') = ℳ'`
+(recall that monoid is a triple \@ref(locale-monoids)).
+Then we say that the two monoids are isomorphic `ℳ ≅⇩M ℳ'` 
+if there exists some isomorphism `η` between them.
+
+```
+text ‹p 37, l 10›
+definition isomorphic_as_monoids (infixl "≅⇩M" 50)
+  where "ℳ ≅⇩M ℳ' ⟷ (let (M, composition, unit) = ℳ; (M', composition', unit') = ℳ' in
+  (∃η. monoid_isomorphism η M composition unit M' composition' unit'))"
+```
+
+It doesn't matter whether the isomorphism `η` is from `M` to `M'` or from `M'` to `M`.
+The following theorem states that the inverse η<sup>-1</sup> (written as `restrict (inv_into M η) M'`)
+is also an isomorphism.
+
+```
+context monoid_isomorphism begin
+
+text ‹p 37, ll 30--33›
+theorem inverse_monoid_isomorphism:
+  "monoid_isomorphism (restrict (inv_into M η) M') M' (⋅') 𝟭' M (⋅) 𝟭"
+  using commutes_with_composition commutes_with_unit surjective 
+  by unfold_locales auto
+
+end (* monoid_isomorphism *)
+```
+Therefore if `ℳ` is isomorphic to `ℳ'`
+then `ℳ'` is isomorphic to `ℳ`.
+```
+text ‹p 37, ll 28--29›
+theorem isomorphic_as_monoids_symmetric:
+  "(M, composition, unit) ≅⇩M (M', composition', unit') ⟹ (M', composition', unit') ≅⇩M (M, composition, unit)"
+  by (simp add: isomorphic_as_monoids_def) (meson monoid_isomorphism.inverse_monoid_isomorphism)
+```
+
+This already gives us a hint that `≅⇩M` may be an equivalence relation (\@ref(locale-equiv-classes)).
+
+### Translations
+
+## Rings
+
+
 

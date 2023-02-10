@@ -5,42 +5,40 @@ formalism in
 [Grothendieck's Schemes in Algebraic Geometry](https://www.isa-afp.org/entries/Grothendieck_Schemes.html#), which in turn builds upon [A Case Study in Basic Algebra](https://www.isa-afp.org/entries/Jacobson_Basic_Algebra.html). You can import it from AFP (see \@ref(afp))
 
 
-
-## Motivation and the big idea
-
-What is topology and why do you need it?
-The goal of topology is to generalize the definition of a continuity.
-The most well known example of continuous functions are real functions 
-whose limit approaches the function value `y` at any given point `x`.
-Intuitively we think of continuous functions as any functions whose graph you can draw
+The goal of topology is to generalize the definition of continuity.
+Intuitively we think of continuous functions as any functions that you can draw
 without taking the pen off the paper. The problem with relying on intuition is that here any many 
 functions that look continuous but aren't. For example `sin(1/x)` is not continuous
 while [weierstrass function](https://en.wikipedia.org/wiki/Weierstrass_function) is.
 
 
-For us topology is an important tool that will make
-real analysis much easier to work with in Isabelle.
-We will also see that continuity arises in many places where 
+Topology is ubiquitous in real, complex and functional analysis
+but also in many places where 
 we wouldn't expect it. For example it is possible to take
 [derivatives of types](https://codewords.recurse.com/issues/three/algebra-and-calculus-of-algebraic-data-types).
 
-
-The main idea is to observe that if function is 
-
-TODO: add visual intuition behind continuity expressed with open sets/neighborhoods/filters.
-
-Topology is one of the paths to mathematical analysis. There is also an alternative path that
-uses abstract algebra. This is nicely summarized by Isabelle's type class hierarchy (graphic comes from [this paper](https://www.cs.vu.nl/~jhl890/pub/hoelzl2013typeclasses.pdf))
-
-![](imgs/type_class_hierarchy.png)
 
 ## Topological spaces
 
 ### Topology {#topological-space-def}
 
-We define topological space as a type `'a` (or meta set \@ref(abstraction-and-representation)) equipped with `open` predicate that tells us whether any `'a set` (subset of `'a`) is *open*. The term *open set* was invented as a generalization of [open intervals](https://en.wikipedia.org/wiki/Interval_(mathematics)). In the space (a.k.a type) of real numbers (`'a=real`) all sets of the form `(a,b)={x∈ℝ | a < x < b}` are open intervals.
+
+
+*Topological space* `(S,τ)` is a set `S :: 'a set` equipped with *topology* `τ :: 'a set set` (tau) such that
+
+1. The empty set `{}` and the set `S` both belong to `τ`.
+2. If `U∈τ` and `V∈τ` then `U ∩ V∈τ`. 
+2. If `F::'a set set` is a family of subsets, such that all `x∈F` are in `x∈τ`, then the union `⋃x∈F. x` is also a member of `τ`.
+
+The members of `τ` are called *open sets*. Therefore we could paraphrase the axioms above as
+
+1. `{}` and `S` are open
+2. (only finite) intersection of open sets is open
+3. (possibly infinite) union of open sets is open
+
+The term *open set* was invented as a generalization of [open intervals](https://en.wikipedia.org/wiki/Interval_(mathematics)). In the space of real numbers all sets of the form `(a,b)={x∈ℝ | a < x < b}` are open intervals.
 <details>
-  <summary>Note</summary>
+  <summary>A different notation is used in Isabelle</summary>
   Brackets `(a,b)={x∈ℝ | a < x < b}` are a mathematical notation of open intervals. Actual Isabelle notation would be 
 ```
 definition greaterThanLessThan :: "'a => 'a => 'a set"  ("(1{_<..<_})") where
@@ -59,127 +57,182 @@ end
 ```
 To see why the error in last `value`, check out the hidden note under \@ref(instantiating-lattice-on-bool).  
 </details>
- In general `'a` open sets could be anything (for example sets of infinite strings with common prefixes are open in [Martin-Löf–Chaitin randomness](https://en.wikipedia.org/wiki/Algorithmically_random_sequence) which is the foundation of information theory and [Kolmogorov complexity](https://en.wikipedia.org/wiki/Kolmogorov_complexity)).
+ In general, open sets could be anything (for example sets of infinite strings that start with some prefix are open in [Martin-Löf–Chaitin randomness](https://en.wikipedia.org/wiki/Algorithmically_random_sequence) which is the foundation of information theory and [Kolmogorov complexity](https://en.wikipedia.org/wiki/Kolmogorov_complexity)).
 
 
 
-Topological space also has three axioms.
-```
-class "open" =
-  fixes "open" :: "'a set ⇒ bool"
-  
-class topological_space = "open" +
-  assumes open_UNIV [simp, intro]: "open UNIV"
-  assumes open_Int [intro]: "open S ⟹ open T ⟹ open (S ∩ T)"
-  assumes open_Union [intro]: "∀S∈K. open S ⟹ open (⋃K)"
-```
-
-In topology textbooks you will see the symbol τ (tau) denoting `τ={S . open S}` the set of open sets and notation *S ∈ τ* instead of `open S`.
-Typically a mathematician would say that `UNIV` and `{}` must be open but in Isabelle we have `open_UNIV` axiom
-which only says that `UNIV` is open. The openness of `{}` follows from axiom `open_Union` when `K={}`.
+Topological spaces are defined In Isabelle as follows.
 
 ```
-lemma open_empty [continuous_intros, intro, simp]: "open {}"
-  using open_Union [of "{}"] by simp
+text ‹p 25, def 1.1.1›  (* You can find this in the book on page 25 *)
+locale topological_space = fixes S :: "'a set" and is_open :: "'a set ⇒ bool"
+  assumes open_space [simp, intro]: "is_open S"
+    and open_imp_subset: "is_open U ⟹ U ⊆ S"
+    and open_inter [intro]: "⟦is_open U; is_open V⟧ ⟹ is_open (U ∩ V)"
+    and open_union [intro]: "⋀F::('a set) set. (⋀x. x ∈ F ⟹ is_open x) ⟹ is_open (⋃x∈F. x)"
 ```
 
-<details>
-<summary>More detailed proof</summary>
+Instead of a set `τ` we have a predicate `is_open` such that `is_open U ⟹ U ⊆ S`. 
+The two definitions are equivalent because `τ={U∈Pow S . is_open U}` (recall that `Pow` is the power-set \@ref(operations-on-sets)).
+Moreover we do not specify that `{}` is open because this fact already follows from `open_union` axiom.
 
-The notation `open_Union [of "{}"]` is equivalent to creating a new auxiliary lemma `open_Union_trivial`.
 ```
-lemma (in topological_space) open_Union_trivial: "∀S∈{}. open S ⟹ open {}"
-  apply(simp)
-  done
-lemma (in topological_space) open_empty : "open {}" 
-  apply(rule open_Union_trivial) (* goal becomes:  "Ball {} open" *)
-  apply(rule ballI) (* new goal: "⋀S. S ∈ {} ⟹ open S" *)
-  apply(simp)
-  done
-```
-We added `(in topological_space)` because this proof (and many of other below) only holds in the context of this type class. You can also use `context` keyword (\@ref(lattices-in-isabelle)).
+context topological_space begin
 
-</details>
-The notation `⋃K` stands for an infinite union of all sets `S` 
-that are members of `K`. The axiom `open_Union` states that if all sets `S` are open (`∀S∈K. open S`)
-then their union must be open too (`open (⋃K)"`).
+text ‹p 25, def 1.1.1›
+theorem open_empty [simp, intro]: "is_open {}"
+  using open_union[of "{}"] by auto
+```
 
 If we can take unions over infinite sets, then clearly we can
 take finite unions.
-```
-lemma open_Un [continuous_intros, intro]: "open S ⟹ open T ⟹ open (S ∪ T)"
-  using open_Union [of "{S, T}"] by simp
-```
-
-The axiom `open_Int` only allows us to take intersections of two open sets. This means 
-that we can take intersections over `finite` sets.
 
 ```
-lemma open_Inter [continuous_intros, intro]: "finite S ⟹ ∀T∈S. open T ⟹ open (⋂S)"
-  by (induction set: finite) auto
+lemma open_Un [continuous_intros, intro]: "is_open S ⟹ is_open T ⟹ is_open (S ∪ T)"
+  using open_union [of "{S, T}"] by auto
 ```
 
+The axiom `open_inter` only allows us to take intersections of two open sets. This means that we can take intersections over finite sets.
+
+```
+text ‹p 30, exercise 4›
+lemma open_Inter [continuous_intros, intro]: "finite F ⟹ ∀T∈F. is_open T ⟹ is_open (S ∩ ⋂F)"
+  apply(induction set: finite)
+  apply(auto)
+  apply(subst Set.Int_assoc[symmetric])
+  apply(subst Set.Int_commute[symmetric])
+  apply(subst Set.Int_assoc)
+  apply(rule open_inter)
+  by auto
+```
+<details>
+<summary>A detailed proof</summary>
+```
+text ‹p 30, exercise 4›
+lemma open_Inter [continuous_intros, intro]: "finite F ⟹ ∀T∈F. is_open T ⟹ is_open (S ∩ ⋂F)"
+  apply(induction set: finite)
+  (* 
+    1. Ball {} is_open ⟹ is_open (S ∩ ⋂ {})
+    2. ⋀x F. finite F ⟹
+           x ∉ F ⟹
+           (Ball F is_open ⟹ is_open (S ∩ ⋂ F)) ⟹ Ball (insert x F) is_open ⟹ is_open (S ∩ ⋂ (insert x F))
+  *)
+   apply(simp)
+  apply(simp)
+  (* 1. ⋀x F. finite F ⟹ x ∉ F ⟹ is_open (S ∩ ⋂ F) ⟹ is_open x ∧ (∀x∈F. is_open x) ⟹ is_open (S ∩ (x ∩ ⋂ F)) *)
+  apply(subst Set.Int_assoc[symmetric])
+  (* 1. ⋀x F. finite F ⟹ x ∉ F ⟹ is_open (S ∩ ⋂ F) ⟹ is_open x ∧ (∀x∈F. is_open x) ⟹ is_open (S ∩ x ∩ ⋂ F) *)
+  apply(subst Set.Int_commute[symmetric])
+  (* 1. ⋀x F. finite F ⟹ x ∉ F ⟹ is_open (S ∩ ⋂ F) ⟹ is_open x ∧ (∀x∈F. is_open x) ⟹ is_open (x ∩ S ∩ ⋂ F) *)
+  apply(subst Set.Int_assoc)
+  (* 1. ⋀x F. finite F ⟹ x ∉ F ⟹ is_open (S ∩ ⋂ F) ⟹ is_open x ∧ (∀x∈F. is_open x) ⟹ is_open (x ∩ (S ∩ ⋂ F)) *)
+  apply(rule open_inter)
+  (* 
+     1. ⋀x F. finite F ⟹ x ∉ F ⟹ is_open (S ∩ ⋂ F) ⟹ is_open x ∧ (∀x∈F. is_open x) ⟹ is_open x
+     2. ⋀x F. finite F ⟹ x ∉ F ⟹ is_open (S ∩ ⋂ F) ⟹ is_open x ∧ (∀x∈F. is_open x) ⟹ is_open (S ∩ ⋂ F)
+  *)
+  by auto
+```
+</details>
 An infinite intersection of open sets is **not** guaranteed to be open.
 
-If for all `x ∈ S` there exists some open subset `T ⊆ S` containing `x ∈ T` then `S` must be open.
+
+If for all `x ∈ U` there exists some open subset `T ⊆ U` containing `x ∈ U` then `S` must be open.
 
 ```
 lemma openI:
-  assumes "⋀x. x ∈ S ⟹ ∃T. open T ∧ x ∈ T ∧ T ⊆ S"
-  shows "open S"
+  assumes "⋀x. x ∈ U ⟹ ∃T. is_open T ∧ x ∈ T ∧ T ⊆ U"
+  shows "is_open U"
 proof -
-  have "open (⋃{T. open T ∧ T ⊆ S})" by auto
-  moreover have "⋃{T. open T ∧ T ⊆ S} = S" by (auto dest!: assms)
-  ultimately show "open S" by simp
+  have "is_open (⋃{T. is_open T ∧ T ⊆ U})" by auto
+  moreover have "⋃{T. is_open T ∧ T ⊆ U} = U" by (auto dest!: assms)
+  ultimately show "is_open U" by simp
 qed
 ```
 
-This holds true because we could take union of all `T`s. The union of `T`s must be open and equal `S`.
-Therefore `S` must be open.
-
-#### Discrete topology
+This holds true because we could take union of all `T`s. The union of `T`s must be open and equal `U`.
+Therefore `U` must be open.
 
 
 
-Discrete topology is a special case of topological space in which all subsets `'a set` are open
+### Discrete topology
+
+
+
+Discrete topology is a special case of topological space in which all subsets `U ⊆ S` are open
 
 ```
-class discrete_topology = topological_space +
-  assumes open_discrete: "⋀A. open A"
+locale discrete_topology = topological_space +
+  assumes open_discrete: "⋀U. U ⊆ S ⟹ is_open U"
 ```
 
 <details>
 <summary> Mind the context! </summary>
-While all the theorems above live in 
+While all the theorems above lived in 
 ```
 context topological_space
 begin
 ...
 end
 ```
-discrete topology is defined outside of it.
+discrete topology is a new locale defined outside of it.
 </details>
 
-Try to prove that if all singleton sets are open then the space is discrete
+
+The opposite of discrete space is the *indiscrete space* in which the only open sets are the improper subsets of `S` 
+```
+text ‹p 27, def 1.1.7›
+locale indiscrete_topology = topological_space +
+  assumes open_discrete: "⋀U. is_open U ⟹ U = {} ∨ U = S"
+```
+
+
+If all singleton sets are open then the space is discrete (which follows easily from `openI` theorem above)
 
 ```
-lemma (in topological_space) singl_open_discr : "∀ x::'a . open {x} ⟹ ∀s::'a set . open s"
+text ‹p 29, def 1.1.9›
+theorem singl_open_discr : 
+  assumes tp:"topological_space S is_open"
+  and sng:"⋀ x. x ∈ S ⟹ is_open {x}"
+  shows "discrete_topology S is_open"
+proof -
+  interpret S: topological_space S is_open by fact
+  from tp sng show ?thesis 
+    apply(unfold_locales)
+    apply(rule local.S.openI)
+    by(auto)
+qed
 ```
 
 
 
-### Open, closed, clopen sets
+### Open, closed and clopen sets
 
-We define a set to be `closed` if and only if (`⟷`) its complement (`-S`) is open
+*Closed set* is defined to be a complement of an open set.
 
 ```
-definition closed :: "'a set ⇒ bool"
-  where "closed S ⟷ open (- S)"
+text ‹p 34, def 1.2.4›
+definition is_closed :: "'a set ⇒ bool"
+  where "is_closed U ≡ U ⊆ S ∧ is_open (S ∖ U)"
 ```
+<details>
+<summary>Equivalent definitions used by `simp`</summary>
+```
+lemma open_closed[simp]: "U ⊆ S ⟹ is_closed (S ∖ U) ⟷ is_open U"
+  by(simp add: is_closed_def double_diff)
+  
+lemma closed_open: "U ⊆ S ⟹ is_closed U ⟷ is_open (S ∖ U)"
+  by(simp add: is_closed_def double_diff)
+```
+</details>
+
+All properties of open sets also hold for closed sets 
+if we swap unions with intersections. This follows
+from [De Morgan's law](https://en.wikipedia.org/wiki/De_Morgan%27s_laws).
 
 <details>
 <summary> Mind the context! </summary>
-All theorems in this section as well as definition of `closed` live in 
+All theorems in this section as well as definition of `is_closed` live in 
 `topological_space` context.
 ```
 context topological_space
@@ -188,16 +241,63 @@ begin
 end
 ```
 </details>
-
-The empty `{}` and full `UNIV` sets are closed
-
+The empty set is closed.
 ```
-lemma closed_empty [continuous_intros, intro, simp]: "closed {}"
-  unfolding closed_def by simp
-  
-lemma closed_UNIV [continuous_intros, intro, simp]: "closed UNIV"
-  unfolding closed_def by simp
+text ‹p 34, def 1.2.5 i›
+theorem closed_empty [simp, intro]: "is_closed {}"
+  by(unfold is_closed_def) (auto)
 ```
+The space `S` is closed itself
+```
+text ‹p 34, def 1.2.5 i›
+theorem closed_space [simp, intro]: "is_closed S"
+  by(unfold is_closed_def) (auto)
+```
+
+Infinite intersection is closed
+```
+text ‹p 34, def 1.2.5 ii›
+lemma closed_Inter [continuous_intros, intro]: "⋀F::('a set) set. (⋀x. x ∈ F ⟹ is_closed x) ⟹ is_closed (S ∩ ⋂F)"
+  unfolding is_closed_def by(auto simp add: Diff_dist[symmetric] Diff_Int_nAry simp del: Complete_Lattices.UN_simps)
+```
+<details>
+<summary>More detailed proof.</summary>
+Notice that the additional intersection `S ∩` is necessary in `is_closed (S ∩ ⋂F)` because
+if `F` is an empty familiy of sets (`F={}`) then the quantifier `⋂F` returns the full set `⋂F=UNIV` which
+need not be a subset of `S`. In mathematical textbooks this would often be left implicit.
+In formal logic, we have to be extra precise. 
+```
+text ‹p 34, def 1.2.5 ii›
+lemma closed_Inter [continuous_intros, intro]: "⋀F::('a set) set. (⋀x. x ∈ F ⟹ is_closed x) ⟹ is_closed (S ∩ ⋂F)"
+  unfolding is_closed_def
+  (* 1. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ S ∩ ⋂ F ⊆ S ∧ is_open (S∖(S ∩ ⋂ F)) *)
+  apply(rule conjI)
+   (* 
+     1. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ S ∩ ⋂ F ⊆ S
+     2. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ is_open (S∖(S ∩ ⋂ F))
+   *)
+   apply(simp) (* solves first subgoal *)
+  apply(subst Diff_dist[symmetric]) 
+  (* 1. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ is_open (S∖⋂ F ∪ (S∖S)) *)
+  apply(subst Diff_cancel)
+  (* 1. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ is_open (S∖⋂ F ∪ {}) *)
+  apply(subst Set.Un_empty_right)
+  (* 1. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ is_open (S∖⋂ F) *)
+  apply(subst Diff_Int_nAry)
+  (* 1. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ is_open (⋃V∈F . S ∖ V) *)
+  apply(rule open_union)
+  (* 1. ⋀F. (⋀x. x ∈ F ⟹ x ⊆ S ∧ is_open (S∖x)) ⟹ x ∈ complement_in_of S ` F ⟹ is_open x *)
+  by auto
+```
+</details>
+
+Union of closed sets is closed
+```
+text ‹p 34, def 1.2.5 iii›
+lemma closed_Un [continuous_intros, intro]: "is_closed U ⟹ is_closed V ⟹ is_closed (U ∪ V)"
+  by(unfold is_closed_def) (simp add:Set.Diff_Un open_inter)
+```
+
 
 Sets that are both closed and open are called *clopen* 
 <details>
@@ -206,37 +306,73 @@ By finding clopen sets it is possible
 to detect disconnected components, which you can intuitively think of like "cracks" in the space. 
 If `{}` and `UNIV` are the only clopen sets, then there are no "cracks".
 </details>
-
-A union and intersection of closed sets is closed
-
 ```
-lemma closed_Un [continuous_intros, intro]: "closed S ⟹ closed T ⟹ closed (S ∪ T)"
-  unfolding closed_def by auto
-
-lemma closed_Int [continuous_intros, intro]: "closed S ⟹ closed T ⟹ closed (S ∩ T)"
-  unfolding closed_def by auto
+text ‹p 36, def 1.2.6›
+definition is_clopen :: "'a set ⇒ bool"
+  where "is_clopen U ≡ is_open U ∧ is_closed U"
 ```
 
-Infinite intersection is closed too
-
-```
-lemma closed_Inter [continuous_intros, intro]: "∀S∈K. closed S ⟹ closed (⋂K)"
-  unfolding closed_def uminus_Inf by auto
-```
-
-You may notice at this point that everything that holds for open sets should
-also hold for closed sets after swapping unions with intersections. This simply follows
-from [De Morgan's law](https://en.wikipedia.org/wiki/De_Morgan%27s_laws).
 
 Difference of open and closed set is open
 
 ```
-lemma open_Diff [continuous_intros, intro]: "open S ⟹ closed T ⟹ open (S - T)"
-  by (simp add: closed_open Diff_eq open_Int)
-
-lemma closed_Diff [continuous_intros, intro]: "closed S ⟹ open T ⟹ closed (S - T)"
-  by (simp add: open_closed Diff_eq closed_Int)
+lemma open_Diff [continuous_intros, intro]: 
+  assumes ou:"is_open U"
+    and cv: "is_closed V"
+  shows "is_open (U ∖ V)"
 ```
+<details>
+<summary>Proof</summary>
+```
+proof -
+  from ou have us: "U ⊆ S" by (rule open_imp_subset)
+  from cv have osv: "is_open (S∖V)" by (unfold is_closed_def) simp
+  from osv ou have svu: "is_open ((S∖V) ∩ U)" by (rule open_inter)
+  from us svu show "is_open (U∖V)" by (subst Diff_eq_on[OF us]) (subst Set.Int_commute)
+qed
+```
+</details>
+Difference of closed and open set is closed
+```
+lemma closed_Diff [continuous_intros, intro]: 
+  assumes cu:"is_closed U" 
+    and ov: "is_open V" 
+  shows "is_closed (U ∖ V)"
+```
+<details>
+<summary>Proof</summary>
+```
+proof -
+  from cu have ou: "U ⊆ S" by (unfold is_closed_def) simp
+  from cu have osu: "is_open (S∖U)" by (unfold is_closed_def) simp
+  from osu ov have suv: "is_open ((S∖U) ∪ V)" by(rule open_Un)
+    from suv have osu: "is_closed (S∖(S∖U ∪ V))" 
+    using open_imp_subset[OF ov]
+    apply(subst is_closed_def)
+    apply(subst double_diff)
+    by(auto)
+  from osu have ssuv: "is_closed ((S∖(S∖U))∖V)" by(subst diff_as_union)
+  from ssuv show "is_closed (U ∖ V)" 
+    by(subst double_diff[OF ou, symmetric])
+qed
+```
+</details>
+
+
+### Finite-closed topology
+
+A topological space is called *cofinite* if closed sets are exactly those sets that are finite
+
+```
+text ‹p 39, def 1.3.1›
+locale cofinite_topology = topological_space +
+  assumes finite_is_closed: "⋀U. ⟦ U⊆ S ; finite U ⟧ ⟹ is_closed U"
+  assumes closed_is_finite: "⋀U. is_closed U ⟹ finite U"
+```
+
+For definitions `1.3.4`, `1.3.5`, `1.3.6` from page 41 of the book, see \@ref(locale-sur-inj-bij)
+and \@ref(inj-sur-bij).
+
 
 
 ### Basis
