@@ -5,7 +5,9 @@ The very basics of set theory have already been covered. The definition of `set`
 `undefined` in \@ref(undefined), equivalence classes in \@ref(equiv-class), order in \@ref(order-type-classes),
 lattices in \@ref(lattices-in-isabelle), Boolean algebra in \@ref(bool-algebra) and some basic properties of `set` in \@ref(main-sets).
 
-Here we extend these ideas to fully leverage locales.
+Here we extend these ideas to fully leverage locales. 
+
+TODO: Follow a proper set theory textbook and extend this chapter.
 
 ## Maps {#locale-sur-inj-bij}
 
@@ -80,6 +82,7 @@ end (* bijective_map *)
 
 ## Equivalence classes {#locale-equiv-classes}
 
+TODO
 
 ```
 text ‹p 11, ll 6--11›

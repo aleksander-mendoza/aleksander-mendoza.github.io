@@ -922,7 +922,73 @@ This already gives us a hint that `≅⇩M` may be an equivalence relation (\@re
 
 ### Translations
 
+Monoid operation `composition :: "'a ⇒ 'a ⇒ 'a"` is a binary operation (takes two arguments).
+For any given element `a ∈ M` we can create a function `λx. a ⋅ x` of type `'a ⇒ 'a`
+that applies this element on the left. Therefore we can treat elements of `M` as if
+they were functions `M →⇩E M`. 
+
+For example you can rotate arms of a clock by some angle.
+If the time is 12:00 and you rotate 45° clockwise then the arm will point at 3:00.
+Similarly 11:00+45°=2:00, 1:00+45°=4:00, 2:00+45°=5:00 and so on. This looks like
+symmetric group S<sub>12</sub> where hours are the domain `S` and rotations are 
+functions `S →⇩E S` (bijections in fact).
+The hours themselves are defined by angles, therefore we could write 
+11:00+3:00=2:00, 1:00+3:00=4:00, 2:00+3:00=5:00 and so on. Now this looks like a
+group where the set `M` are hours and `+` is the group operation.
+
+This observation suggests us that in some sense an arbitrary group may look like a symmetric group. 
+Perhaps in the sense of... isomorphism?
+
+Let us define a new locale
+
+```
+text ‹p 38, l 4›
+locale left_translations_of_monoid = monoid 
+begin (* Mind the context! *)
+```
+
+which is just a copy of the `monoid` locale. The purpose behind it is that 
+
+```
+text ‹p 38, ll 5--7›
+definition translation ("'(_')⇩L") where "translation = (λa ∈ M. λx ∈ M. a ⋅ x)"
+```
+
 ## Rings
+
+Everything we studied before was some set `M` equipped  with only one operation `⋅`.
+We called this operation simply "composition". Now we are going one step further
+and consider sets with two operations `+` and `⋅`. Calling both of them
+"composition" would be confusing, therefore, we will instead refer to  `+`
+as "additive" operation and `⋅` as "multiplicative" operation 
+(or "addition" and "multiplication" for short). 
+
+For example numbers can be added and multiplied as usual. Another more interesting example
+as sets which can be added by taking their union  (`A∪B` as `A+B`) and multiplied by taking their Cartesian product
+ (`A×B` as `A⋅B`). Another example are polynomials and [formal power serie](https://en.wikipedia.org/wiki/Formal_power_series). An example related to statistics and machine learning
+ are probabilities whose addition `p(A)+p(B) = p(A∨B)` gives us the probabilitiy of either `A` or `B` happening, whereas multiplication `p(A)⋅p(B) = p(A∧B)` is the probability of both `A` and `B` events occurring (assuming they are independent).
+
+```
+text ‹Def 2.1›
+text ‹p 86, ll 20--28›
+locale ring = additive: abelian_group R "(+)" 𝟬 + multiplicative: monoid R "(⋅)" 𝟭
+  for R and addition (infixl "+" 65) and multiplication (infixl "⋅" 70) and zero ("𝟬") and unit ("𝟭") +
+  assumes distributive: "⟦ a ∈ R; b ∈ R; c ∈ R ⟧ ⟹ a ⋅ (b + c) = a ⋅ b + a ⋅ c"
+    "⟦ a ∈ R; b ∈ R; c ∈ R ⟧ ⟹ (b + c) ⋅ a = b ⋅ a + c ⋅ a"
+begin
+
+text ‹p 86, ll 20--28›
+notation additive.inverse ("- _" [66] 65)
+abbreviation subtraction (infixl "-" 65) where "a - b ≡ a + (- b)"  (* or, alternatively, a definition *)
+
+end (* ring *)
+```
+
+
+## Fields
+
+TODO
+
 
 
 

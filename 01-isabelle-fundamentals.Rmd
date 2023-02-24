@@ -2475,7 +2475,7 @@ qed
 ## Function sets {#func-sets}
 
 Function type `'a => 'b` is built into Isabelle, on par with meta-logic operations \@ref(meta-logic).
-All functions in Isabelle are total \ref{primrec-functions} and therefore `'a => 'b` assigns some `'b` to every `'b`. Sometimes we would like to work with functions as if they were sets.
+All functions in Isabelle are total \@ref(primrec-functions) and therefore `'a => 'b` assigns some `'b` to every `'b`. Sometimes we would like to work with functions as if they were sets.
 
 We can use `restrict f A` 
 
