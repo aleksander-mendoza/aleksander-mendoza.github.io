@@ -1,4 +1,0 @@
-# Functional Analysis
-
-TODO: I first need to implement algebraic fields, then move on to vector spaces. 
-The topology chapter also needs further development.
