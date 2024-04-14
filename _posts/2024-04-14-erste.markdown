@@ -1,0 +1,17 @@
+---
+layout: post
+title:  "Erste Versammlung"
+date:  2024-04-14 12:34:55 +0100
+categories: versammlung
+hidden:
+  - related_posts
+banner:
+  image: /assets/images/nottingham.png
+  background: "#000"
+  height: "100vh"
+  min_height: "38vh"
+  heading_style: "font-size: 4.25em; font-weight: bold; text-decoration: underline"
+  subheading_style: "color: gold"
+---
+
+Die Lokale Versammlung soll am 11. Mai mit einem gemeinsamen Mittagessen beginnen.
