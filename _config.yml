@@ -29,7 +29,8 @@ url: "https://lokaleversammlungnürnberg.de" # the base hostname & protocol for 
 logo: "/assets/images/logo.jpg"
 favicon: "favicon.ico"
 # Build settings
-theme: jekyll-theme-yat
+remote_theme: "jeffreytse/jekyll-theme-yat"
+# theme: jekyll-theme-yat
 
 # If you want to link only specific pages in your header, uncomment
 # this and add the path to the pages in order as they should show up
