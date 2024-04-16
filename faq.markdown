@@ -10,21 +10,21 @@ hidden:
 sidebar: []
 ---
 
-
 ### Wie groß soll die Versammlung sein?
 
 Die Versammlung soll 30 bis 60 Personen umfassen.
 
+ 
+
 ### Wie wird die Versammlung zusammengesetzt?
 
-Die Versammlung soll möglichst verschiedene Menschen zusammenbringen, zugleich aber möglichst offen 
-für alle sein, die sich für dieses Experiment interessieren und niemanden ausschließen.
+Die Versammlung soll möglichst verschiedene Menschen zusammenbringen und gleichzeitig möglichst offen für alle sein, die sich für dieses Experiment interessieren.
 
-Wie wir diesen Spagat schaffen überlegen wir noch.
 
-###  Komme ich dort auch zu Wort?
+### Komme ich dort auch zu Wort?
 
-Jede und jeder, der bei der Versammlung mitwirkt, muss dem Rahmen und Regeln zustimmen, die Sie hier
-finden. Geschulte Moderatoren achten darauf, dass alle Regeln und Absprachen eingehalten werden und 
-alle Teilnehmende gleiche Rechte und Mitwirkungsmöglichkeiten haben. Wer wiederholt gegen Regeln 
-verstößt, kann ausgeschlossen werden.
+Jede und jeder, der/die bei der Versammlung mitwirkt, muss dem Rahmen zustimmen, der dort gilt, und sich auf den Prozess einlassen. Geschulte Moderatorinnen und Moderatoren achten darauf, dass alle Regeln und Absprachen eingehalten werden und alle Teilnehmende gleiche Rechte und Mitwirkungsmöglichkeiten haben. Wer wiederholt gegen Regeln verstößt, kann ausgeschlossen werden.
+
+ 
+
+

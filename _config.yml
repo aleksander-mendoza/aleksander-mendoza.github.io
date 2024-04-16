@@ -43,7 +43,7 @@ header_pages:
 defaults:
    home:
      heading: "Lokale Versammlung Nürnberg"
-     subheading: "mit Projekt Menschlichkeit"
+     subheading: "im Rahmen des Projekts Menschlichkeit"
      banner: "Your image url"
 
 paginate: 5
