@@ -36,11 +36,6 @@ Auf dieser gerade entstehenden Website finden Sie weitere Informationen zu
 - [Fragen und Antworten](/fragen-antworten)
 - [Möglichkeiten zum Mitmachen](/mitmachen)
 
- 
-
-Hier ein kontinuierlich aktualisiertes [Infoblatt mit den wichtigsten Informationen](/assets/Infoblatt.pdf) zu unserem Vorhaben.
-
- 
 
 Haben Sie Fragen? Ideen? Vorschläge? Kontaktieren Sie uns gerne per [per EMail](promensch_nue@mail.de) – wir antworten schnellstmöglich.
 
