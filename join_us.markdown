@@ -16,8 +16,7 @@ Nächste Lokale Versammlung: {% for post in site.categories.versammlung  limit:1
 Wer im Postleitzahlenbezirk 90409 Nürnberg wohnt, ist herzlich willkommen!
 
 Es ist am praktischsten für uns, wenn Sie sich vorab per E-Mail an promensch_nue@mail.de anmelden (mit Name, Adresse), 
-damit wir genug kochen können, genug Moderatorinnen und Moderatoren einladen usw. Sie können aber auch ohne vorherige 
-Anmeldung hinzustoßen.
+damit wir genug kochen können, genug Moderatorinnen und Moderatoren einladen usw. 
 
  
 
