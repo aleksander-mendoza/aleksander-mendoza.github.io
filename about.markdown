@@ -38,7 +38,5 @@ Institutionen einfordert – etwa im Sinne eines vierten Standbeins der Demokrat
 [Buch von Patrizia Nanz und Claus Leggewie](https://www.wagenbach.de/buecher/titel/1026-die-konsultative.html)), neben 
 Legislative, Exekutive und Judikative.
 
-
-Dieses Experiment wollen wir auch in unserem Postleitzahlenbezirk 90409 Nürnberg versuchen. Wie Sie mitmachen können, 
-erfahren Sie [hier](/mitmachen).
+Dieses Experiment wollen wir auch in unserem Postleitzahlenbezirk 90409 Nürnberg versuchen. Und hier erzählen wir, was uns persönlich dazu motiviert:
 
