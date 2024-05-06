@@ -40,11 +40,12 @@ Auf dieser gerade entstehenden Website finden Sie weitere Informationen zu
 Haben Sie Fragen? Ideen? Vorschläge? Kontaktieren Sie uns gerne per [per EMail](promensch_nue@mail.de) – wir antworten schnellstmöglich.
 
 <div class="embed-container">
-  <iframe
+  <embed
       src="https://www.youtube.com/embed/mfl82pGwRgQ"
       width="700"
       height="480"
       frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowfullscreen="true">
-  </iframe>
+  </embed>
 </div>
