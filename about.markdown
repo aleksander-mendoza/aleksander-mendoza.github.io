@@ -50,8 +50,7 @@ Das Team stellt sich vor.
       height="480"
       frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowfullscreen="true">
-  </embed>
+      allowfullscreen="true"/>
 </div>
 <div class="embed-container">
   <embed
@@ -60,6 +59,5 @@ Das Team stellt sich vor.
       height="480"
       frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowfullscreen="true">
-  </embed>
+      allowfullscreen="true"/>
 </div>
