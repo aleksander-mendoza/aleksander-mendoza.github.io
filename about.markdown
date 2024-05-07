@@ -40,3 +40,26 @@ Legislative, Exekutive und Judikative.
 
 Dieses Experiment wollen wir auch in unserem Postleitzahlenbezirk 90409 Nürnberg versuchen. Und hier erzählen wir, was uns persönlich dazu motiviert:
 
+
+Das Team stellt sich vor.
+
+<div class="embed-container">
+  <embed
+      src="https://www.youtube.com/embed/mfl82pGwRgQ"
+      width="700"
+      height="480"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen="true">
+  </embed>
+</div>
+<div class="embed-container">
+  <embed
+      src="https://www.youtube.com/embed/VpN6WcHth0A"
+      width="700"
+      height="480"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen="true">
+  </embed>
+</div>
