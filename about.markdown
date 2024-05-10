@@ -61,3 +61,12 @@ Das Team stellt sich vor.
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowfullscreen="true"/>
 </div>
+<div class="embed-container">
+  <embed
+      src="https://www.youtube.com/embed/S95PVgfGjS8"
+      width="700"
+      height="480"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen="true"/>
+</div>
