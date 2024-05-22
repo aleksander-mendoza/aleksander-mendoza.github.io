@@ -1,0 +1,28 @@
+---
+layout: post
+title:  "Am Samstag 25.05. geht’s los"
+date:  2024-05-22 11:00:00 +0100
+categories: treffen
+hidden:
+  - related_posts
+banner:
+  image: /assets/images/soon-starting.jpg
+  background: "#000"
+  height: "100vh"
+  min_height: "38vh"
+  heading_style: "font-size: 4.25em; font-weight: bold; text-decoration: underline"
+  subheading_style: "color: gold"
+---
+
+Wir sind in den letzten Zügen der Vorbereitung und freuen uns auf den Startschuss am kommenden Samstag. Wenn Sie noch hinzustoßen wollen, sehr gerne.
+
+
+**Meldung:**
+
+
+Nach etwa 3.000 verteilten Flyern und vielen Stunden Gesprächen mit unterschiedlichsten Menschen ist es nun endlich so weit: Am kommenden Samstag findet die erste Lokale Versammlung in Nürnberg statt. Das Essen ist organisiert, die Moderation steht, der Raum ist herausgeputzt. Wie es aussieht, werden wir bereits wieder trockenes und schönes Wetter haben, so dass wir wahrscheinlich auch den Garten des Ukama-Zentrums nutzen können.
+Nach der Versammlung können Sie auch noch zu Kaffee und Kuchen bleiben, sowie zum Konzert mit dem Nürnberger Liedermacher Erik Stenzel (ab 17.30 Uhr).
+Falls Sie noch nicht angemeldet sind, schreiben Sie uns gerne eine kurze E-Mail (das hilft uns, die richtige Essensmenge zu kochen), aber auch wenn Sie kurzfristig hinzustoßen wollen, können Sie das tun.
+Bis Samstag! 
+
+– Das Nürnberger Team des Projekts Menschlichkeit (Aleks, Fabian, Gerle, Jörg, Martina)
