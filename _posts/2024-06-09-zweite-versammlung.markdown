@@ -2,7 +2,7 @@
 layout: post
 title:  "Zweite Lokale Versammlung: Migration/Integration"
 date:  2024-06-09 11:00:00 +0100
-categories: treffen
+categories: versammlung
 hidden:
   - related_posts
 banner:

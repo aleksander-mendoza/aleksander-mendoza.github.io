@@ -2,7 +2,7 @@
 layout: post
 title:  "Gelungene erste Lokale Versammlung"
 date:  2024-05-22 11:00:00 +0100
-categories: treffen
+categories: versammlung
 hidden:
   - related_posts
 banner:

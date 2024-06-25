@@ -3,6 +3,7 @@ layout: post
 title:  "Erste Versammlung (25. Mai)"
 date:  2024-04-14 12:34:55 +0100
 categories: versammlung
+next_date: 25. Mai
 hidden:
   - related_posts
 banner:

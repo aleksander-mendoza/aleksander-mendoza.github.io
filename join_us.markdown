@@ -9,7 +9,7 @@ hidden:
 sidebar: []
 ---
 
-Nächste Lokale Versammlung: {% for post in site.categories.versammlung  limit:1 %} [{{post.title}}]({{post.url}}) {% endfor %}
+Nächste Lokale Versammlung: {% for post in site.categories.versammlung  limit:1 %} [{{post.next_date}}]({{post.url}}) {% endfor %}
 
  
 
